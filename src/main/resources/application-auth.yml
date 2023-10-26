@@ -1,0 +1,20 @@
+spring:
+  config:
+    activate:
+      on-profile: "auth"
+
+  OAuth2:
+    apple:
+      client-id: ${APPLE_CLIENT_ID}
+      auth-url: ${APPLE_AUTH_URL}
+      key-id: ${APPLE_KEY_ID}
+      team-id: ${APPLE_TEAM_ID}
+      redirect-url: ${APPLE_REDIRECT_URL}
+      key-path: ${APPLE_KEY_PATH}
+
+jwt:
+  bearer: ${JWT_BEARER:Bearer}
+  secret-key: ${JWT_SECRET_KEY}
+  access-expiration: ${JWT_ACCESS_EXPIRE:3600000} # 1시간
+  refresh-expiration: ${JWT_REFRESH_EXPIRE:86400000} # 1일
+  refresh-header: ${JWT_REFRESH_HEADER:Authorization-refresh} # refresh token header
