@@ -4,7 +4,7 @@ import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.domain.Question;
-import com.fgama.pillowtalk.exceptions.MemberNotFoundException;
+import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.CoupleQuestionRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;

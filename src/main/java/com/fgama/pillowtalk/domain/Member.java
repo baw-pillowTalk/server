@@ -18,7 +18,7 @@ public class Member {
     private Long id;
 
     @Column(unique = true)
-    private String uniqueId;
+    private String oauthId;
     private String nickname;
     //회원 정보
     private String accessToken;

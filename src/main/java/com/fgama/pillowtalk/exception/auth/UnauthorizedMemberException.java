@@ -1,4 +1,4 @@
-package com.fgama.pillowtalk.exceptions.auth;
+package com.fgama.pillowtalk.exception.auth;
 
 import lombok.Getter;
 

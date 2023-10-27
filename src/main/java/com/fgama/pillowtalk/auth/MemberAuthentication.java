@@ -18,10 +18,12 @@ import java.util.List;
 public class MemberAuthentication extends AbstractAuthenticationToken {
 
     private final String memberOauthId;
+    private final Long userId;
 
     public MemberAuthentication(Member member) {
         super(getAuthorities(member));
-        this.memberOauthId = member.getUniqueId();
+        this.memberOauthId = member.getOauthId();
+        this.userId = member.getId();
     }
 
     private static List<GrantedAuthority> getAuthorities(Member member) {

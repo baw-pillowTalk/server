@@ -1,6 +1,4 @@
-package com.fgama.pillowtalk.exceptions;
-
-import java.util.function.Supplier;
+package com.fgama.pillowtalk.exception;
 
 public class MemberNotFoundException extends NullPointerException {
     public MemberNotFoundException() {

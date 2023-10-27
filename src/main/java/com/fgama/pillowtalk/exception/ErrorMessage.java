@@ -1,4 +1,4 @@
-package com.fgama.pillowtalk.exceptions;
+package com.fgama.pillowtalk.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

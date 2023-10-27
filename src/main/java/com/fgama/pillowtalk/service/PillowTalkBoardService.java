@@ -25,7 +25,7 @@ public class PillowTalkBoardService {
         pillowTalkBoard.setTitle(title);
         pillowTalkBoard.setBody(body);
         pillowTalkBoard.setEmail(email);
-        pillowTalkBoard.setCreator(member.getUniqueId());
+        pillowTalkBoard.setCreator(member.getOauthId());
         pillowTalkBoard.setCreateAt(LocalDateTime.now());
         pillowTalkBoardRepository.save(pillowTalkBoard);
     }

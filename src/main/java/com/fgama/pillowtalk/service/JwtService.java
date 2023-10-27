@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.service;
 
-import com.fgama.pillowtalk.exceptions.auth.UnauthorizedMemberException;
+import com.fgama.pillowtalk.exception.auth.UnauthorizedMemberException;
 import com.fgama.pillowtalk.properties.JwtProperties;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;

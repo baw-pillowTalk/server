@@ -2,8 +2,11 @@ package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.components.FileDetail;
 import com.fgama.pillowtalk.domain.*;
-import com.fgama.pillowtalk.exceptions.MemberNotFoundException;
+import com.fgama.pillowtalk.dto.LoginRequestDto;
+import com.fgama.pillowtalk.exception.MemberNotFoundException;
+import com.fgama.pillowtalk.exception.auth.UserNotFoundException;
 import com.fgama.pillowtalk.repository.*;
+import com.fgama.pillowtalk.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -86,7 +89,7 @@ public class MemberService {
 
             coupleRepository.save(couple);
         }
-        log.info("chatting room status 변경 :" + member.getUniqueId() + "현재상태 :" + isInChat);
+        log.info("chatting room status 변경 :" + member.getOauthId() + "현재상태 :" + isInChat);
         memberRepository.save(member);
     }
 
@@ -235,7 +238,7 @@ public class MemberService {
         newMember.setFcmToken(fcmToken);
         newMember.setRefreshToken(refreshToken);
         newMember.setAccessToken(accessToken);
-        newMember.setUniqueId(sub);
+        newMember.setOauthId(sub);
         newMember.setLoginState("solo");
         newMember.setEmoTitle("temptation");
 
@@ -288,7 +291,7 @@ public class MemberService {
 //                newMember.setFcmToken(request.getFcmToken());
         newMember.setRefreshToken(refreshToken);
         newMember.setAccessToken(accessToken);
-        newMember.setUniqueId(sub);
+        newMember.setOauthId(sub);
         newMember.setLoginState("ready");
         newMember.setEmoTitle("temptation");
 
@@ -484,4 +487,19 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
+    @Transactional
+    public String getMemberStatus() {
+        return this.memberRepository.findById(SecurityUtil.getCurrentUserId())
+                .orElseThrow(() -> new UserNotFoundException("일치하는 회원이 존재하지 않습니다."))
+                .getLoginState();
+    }
+
+    @Transactional
+    public Void login(LoginRequestDto request) {
+        this.processOauthLogin()
+    }
+
+    private Member saveUser(LoginRequestDto request) {
+        return this.memberRepository.findMEmber
+    }
 }

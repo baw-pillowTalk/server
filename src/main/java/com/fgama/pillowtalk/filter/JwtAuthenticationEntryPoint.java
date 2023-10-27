@@ -1,7 +1,7 @@
 package com.fgama.pillowtalk.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fgama.pillowtalk.exceptions.ErrorMessage;
+import com.fgama.pillowtalk.exception.ErrorMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;

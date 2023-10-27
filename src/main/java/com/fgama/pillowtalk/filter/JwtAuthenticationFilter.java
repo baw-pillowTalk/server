@@ -44,10 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (request.getRequestURI().equals("/api/v1/member/status")) {
-            // /member/status
-        }
-
         try {
             /* 1. HttpServletRequest 요청에서 access token 파싱 */
             String accessToken = this.jwtService.extractAccessTokenFromRequest(request)

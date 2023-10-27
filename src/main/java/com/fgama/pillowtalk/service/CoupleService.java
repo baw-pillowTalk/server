@@ -4,7 +4,7 @@ import com.fgama.pillowtalk.domain.ChattingMessage;
 import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
-import com.fgama.pillowtalk.exceptions.MemberNotFoundException;
+import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.ChattingRoomRepository;
