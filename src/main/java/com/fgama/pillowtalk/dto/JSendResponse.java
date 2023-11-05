@@ -1,11 +1,12 @@
 package com.fgama.pillowtalk.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import net.minidev.json.JSONObject;
 
 
-
-@Data
+@Setter
+@Getter
 public class JSendResponse {
     private String status;
     private String message;
@@ -21,6 +22,5 @@ public class JSendResponse {
         this.status = status;
         this.message = message;
         this.data = data;
-
     }
 }

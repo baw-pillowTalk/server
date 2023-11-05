@@ -14,10 +14,11 @@ import java.time.LocalDateTime;
 public class PillowTalkBoardService {
     private final PillowTalkBoardRepository pillowTalkBoardRepository;
     private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
 
     public void addComment(String accessToken, String title, String body, String email) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.memberService.getCurrentMember();
         PillowTalkBoard pillowTalkBoard = new PillowTalkBoard();
         if (title == null) {
             pillowTalkBoard.setTitle("질문 제안");

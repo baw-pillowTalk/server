@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.api;
 
-import com.fgama.pillowtalk.config.Constants;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.NoticeBoard;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.service.NoticeBoardService;
@@ -39,9 +39,9 @@ public class NoticeBoardApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("NoticeBoardList", jsonArray);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -53,9 +53,9 @@ public class NoticeBoardApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("body", noticeBoardList.getBody());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 

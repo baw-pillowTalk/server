@@ -1,12 +1,10 @@
 package com.fgama.pillowtalk.service;
 
-import com.fgama.pillowtalk.domain.Challenge;
 import com.fgama.pillowtalk.domain.Couple;
+import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.Member;
-import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.repository.ChallengeRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
-import com.fgama.pillowtalk.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,118 +21,118 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChallengeService {
 
-    private final MemberRepository memberRepository;
-    private final CoupleRepository coupleRepository;
 
+    private final CoupleRepository coupleRepository;
     private final ChallengeRepository challengeRepository;
 
-    public Long join(Challenge challenge) {
-        challengeRepository.save(challenge);
-        return challenge.getId();
+    private final CoupleService coupleService;
+    private final MemberService memberService;
+
+    public Long join(CoupleChallenge coupleChallenge) {
+        challengeRepository.save(coupleChallenge);
+        return coupleChallenge.getId();
     }
 
-    public List<Challenge> findAll() {
+    public List<CoupleChallenge> findAll() {
         return challengeRepository.findAll();
     }
 
-    public Challenge getChallenge(String accessToken, Long id) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-
+    public CoupleChallenge getChallenge(String accessToken, Long id) throws NullPointerException {
+        Member member = this.getMember();
         return challengeRepository.findByCoupleIdAndNumber(member.getCoupleId(), id);
     }
 
-    public Challenge addChallenge(String accessToken, String title, String body, String targetDate) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple coupleById = coupleRepository.findCoupleById(member.getCoupleId());
+    public CoupleChallenge addChallenge(String accessToken, String title, String body, String targetDate) throws NullPointerException {
+        Member member = this.getMember();
+        Couple couple = this.coupleService.getCouple(member);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime dateTime = LocalDate.parse(targetDate, formatter).atStartOfDay();
-        Challenge challenge = Challenge.builder()
+        CoupleChallenge coupleChallenge = CoupleChallenge.builder()
 //                .category(category)
                 .title(title)
                 .body(body)
                 .targetDate(dateTime)
-                .couple(coupleById)
+                .couple(couple)
                 .creator(member.getNickname())
                 .done(false)
                 .number((long) challengeRepository.findByCoupleId(member.getCoupleId()).size())
-                .createAt(LocalDateTime.now())
                 .build();
 
-        return challengeRepository.save(challenge);
+        return challengeRepository.save(coupleChallenge);
     }
 
-    public Challenge updateChallenge(String accessToken, Long index, String title, String body, String targetDate) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple coupleById = coupleRepository.findCoupleById(member.getCoupleId());
-        Challenge challenge1 = challengeRepository.findByCoupleIdAndNumber(coupleById.getId(), index);
+    public CoupleChallenge updateChallenge(String accessToken, Long index, String title, String body, String targetDate) throws NullPointerException {
+        Member member = this.getMember();
+        Couple couple = this.coupleService.getCouple(member);
+        CoupleChallenge coupleChallenge1 = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime dateTime = LocalDate.parse(targetDate, formatter).atStartOfDay();
 //        challenge1.setCategory(category);
-        challenge1.setTitle(title);
-        challenge1.setBody(body);
-        challenge1.setTargetDate(dateTime);
+        coupleChallenge1.setTitle(title);
+        coupleChallenge1.setBody(body);
+        coupleChallenge1.setTargetDate(dateTime);
 
-        return challengeRepository.save(challenge1);
+        return challengeRepository.save(coupleChallenge1);
     }
 
     public Long doneChallenge(String accessToken, Long index) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple coupleById = coupleRepository.findCoupleById(member.getCoupleId());
-        Challenge challenge1 = challengeRepository.findByCoupleIdAndNumber(coupleById.getId(), index);
-        if (challenge1.getDone()) {
+        Member member = this.getMember();
+        Couple couple = this.coupleService.getCouple(member);
+        CoupleChallenge coupleChallenge1 = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
+        if (coupleChallenge1.getDone()) {
             throw new RuntimeException("이미 완료된 챌린지입니다.");
         }
-        challenge1.setDone(true);
+        coupleChallenge1.setDone(true);
 
 
-        return challengeRepository.save(challenge1).getId();
+        return challengeRepository.save(coupleChallenge1).getId();
     }
 
     public void deleteChallenge(String accessToken, Long index) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
+        Member member = this.getMember();
 
         challengeRepository.deleteByCoupleIdAndNumber(member.getCoupleId(), index);
     }
 
     public void sortNumber(String accessToken) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple coupleById = coupleRepository.findCoupleById(member.getCoupleId());
-        List<Challenge> challenges = challengeRepository.findByCoupleId(coupleById.getId());
+        Member member = this.getMember();
+        Couple couple = this.coupleService.getCouple(member);
+        List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleId(couple.getId());
 
         Long index = 0L;
-        for (Challenge challenge : challenges) {
-            challenge.setNumber(index);
-            challengeRepository.save(challenge);
+        for (CoupleChallenge coupleChallenge : coupleChallenges) {
+            coupleChallenge.setNumber(index);
+            challengeRepository.save(coupleChallenge);
             index++;
         }
     }
 
     public List<Integer> getCount(String accessToken) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        List<Challenge> challenges = challengeRepository.findByCoupleId(member.getCoupleId());
+        Member member = this.getMember();
+        List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleId(member.getCoupleId());
         int count = 0;
-        for (Challenge challenge : challenges) {
-            if (challenge.getDone()) {
+        for (CoupleChallenge coupleChallenge : coupleChallenges) {
+            if (coupleChallenge.getDone()) {
                 count += 1;
             }
         }
 
         List<Integer> result = new ArrayList<>();
-        result.add(challenges.size()); // total
-        result.add(challenges.size() - count); //ongoing
+        result.add(coupleChallenges.size()); // total
+        result.add(coupleChallenges.size() - count); //ongoing
         result.add(count); //done
         return result;
     }
 
     public int getLatestChallengePageNoInProgress(String accessToken) throws RuntimeException {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        if (memberByAccessToken.getCoupleId() == null) {
+        Member member = this.getMember();
+        if (member.getCoupleId() == null) {
             throw new RuntimeException("커플없음");
         }
         Sort sort = Sort.by(Sort.Direction.DESC, "createAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
-        Page<Challenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(memberByAccessToken.getCoupleId(), false, pageRequest);
+        Page<CoupleChallenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(member.getCoupleId(), false, pageRequest);
         if (pageByCoupleId.getTotalPages() == 0) {
             return pageByCoupleId.getTotalPages();
         } else {
@@ -143,13 +141,13 @@ public class ChallengeService {
     }
 
     public int getLatestChallengePageNoDone(String accessToken) throws RuntimeException {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        if (memberByAccessToken.getCoupleId() == null) {
+        Member member = this.getMember();
+        if (member.getCoupleId() == null) {
             throw new RuntimeException("커플없음");
         }
         Sort sort = Sort.by(Sort.Direction.ASC, "createAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
-        Page<Challenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(memberByAccessToken.getCoupleId(), true, pageRequest);
+        Page<CoupleChallenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(member.getCoupleId(), true, pageRequest);
         if (pageByCoupleId.getTotalPages() == 0) {
             return pageByCoupleId.getTotalPages();
         } else {
@@ -157,38 +155,42 @@ public class ChallengeService {
         }
     }
 
-    public List<Challenge> getChallengeData(String accessToken) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
+    public List<CoupleChallenge> getChallengeData(String accessToken) throws NullPointerException {
+        Member member = this.getMember();
         return challengeRepository.findByCoupleId(member.getCoupleId());
     }
 
-    public Challenge findByIndex(String accessToken, int index) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(NullPointerException::new);
+    public CoupleChallenge findByIndex(String accessToken, int index) throws NullPointerException {
+        Member member = this.getMember();
         Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
-        return couple.getChallenges().get(index);
+        return couple.getCoupleChallenges().get(index);
     }
 
 
-    public List<Challenge> getInProgressChallengeList(String accessToken, int pageNo) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
+    public List<CoupleChallenge> getInProgressChallengeList(String accessToken, int pageNo) {
+        Member member = this.getMember();
         Sort sort = Sort.by(Sort.Direction.DESC, "targetDate");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
-        List<Challenge> challenges = challengeRepository.findByCoupleIdAndDone(memberByAccessToken.getCoupleId(), false, pageRequest);
-        if (challenges == null) {
+        List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleIdAndDone(member.getCoupleId(), false, pageRequest);
+        if (coupleChallenges == null) {
             throw new NullPointerException("커플 챌린지 비었음");
         }
-        return challenges;
+        return coupleChallenges;
     }
 
-    public List<Challenge> getDoneChallengeList(String accessToken, int pageNo) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
+    public List<CoupleChallenge> getDoneChallengeList(String accessToken, int pageNo) {
+        Member member = this.getMember();
         Sort sort = Sort.by(Sort.Direction.ASC, "createAt");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
-        List<Challenge> challenges = challengeRepository.findByCoupleIdAndDone(memberByAccessToken.getCoupleId(), true, pageRequest);
-        if (challenges == null) {
+        List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleIdAndDone(member.getCoupleId(), true, pageRequest);
+        if (coupleChallenges == null) {
             throw new NullPointerException("커플 챌린지 비었음");
         }
-        return challenges;
+        return coupleChallenges;
+    }
+
+    public Member getMember() {
+        return this.memberService.getCurrentMember();
     }
 }
 

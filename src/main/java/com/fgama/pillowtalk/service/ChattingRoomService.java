@@ -5,11 +5,8 @@ import com.fgama.pillowtalk.domain.ChattingMessage;
 import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
-import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.ChattingRoomRepository;
-import com.fgama.pillowtalk.repository.CoupleRepository;
-import com.fgama.pillowtalk.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,7 +15,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,9 +23,9 @@ import java.util.List;
 public class ChattingRoomService {
     private final ChattingRoomRepository chattingRoomRepository;
     private final ChattingMessageRepository chattingMessageRepository;
-    private final MemberRepository memberRepository;
-    private final CoupleRepository coupleRepository;
     private final FileUploadService fileUploadService;
+    private final MemberService memberService;
+    private final CoupleService coupleService;
 
     public Long join(ChattingRoom chattingRoom) {
 //        validateDuplicateChattingRoom(chattingRoom);
@@ -72,20 +68,18 @@ public class ChattingRoomService {
 
     public ChattingMessage addChattingMessage(String accessToken, String message, Long index, String emoji, String url, MultipartFile multipartFile, String type) throws NullPointerException {
         log.info("add chattingMessage accessToken: " + accessToken);
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
+        Member member = this.getMember();
+        Couple couple = this.coupleService.getCouple(member);
 
         Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
 
         log.info("add chattingMessage find member");
         ChattingMessage chattingMessage = new ChattingMessage();
         chattingMessage.setMessage(message);
-//        chattingMessage.setMember(member);
-        chattingMessage.setCreatedAt(LocalDateTime.now());
         chattingMessage.setIsRead(partner.getChattingRoomStatus());
         chattingMessage.setType(type);
-        chattingMessage.setNumber((long) couple.getChattingRooms().get(0).getMessageList().size());
-        chattingMessage.setChattingRoom(couple.getChattingRooms().get(0));
+        chattingMessage.setNumber((long) couple.getChattingRoom().getMessageList().size());
+        chattingMessage.setChattingRoom(couple.getChattingRoom());
         log.info("add chattingMessage find chattingRoom");
 
         FileDetail fileDetail;
@@ -120,5 +114,7 @@ public class ChattingRoomService {
         return chattingMessageRepository.save(chattingMessage);
     }
 
-
+    public Member getMember() {
+        return this.memberService.getCurrentMember();
+    }
 }

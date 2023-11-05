@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.api;
 
-import com.fgama.pillowtalk.config.Constants;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.*;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
@@ -34,9 +34,9 @@ public class CoupleQuestionApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("pageNo", coupleQuestionService.getLatestQuestionPageNo(accessToken));
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
 
 
@@ -142,9 +142,9 @@ public class CoupleQuestionApi {
             }
             jsonObject.put("createAt", question.getCreatedAt());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
     }
 
@@ -153,8 +153,8 @@ public class CoupleQuestionApi {
                                         @RequestBody AnswerQuestionRequest request) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            Member member = memberService.findMemberByAccessToken(accessToken);
-            Couple couple = coupleService.findCoupleById(member.getCoupleId());
+            Member member = memberService.getCurrentMember();
+            Couple couple = coupleService.getCouple(member);
             CoupleQuestion coupleQuestion = coupleQuestionService.updateSelfAnswer(accessToken, request.getIndex(), request.getMyAnswer());
             String fcmDetail = firebaseCloudMessageService.getFcmAnswerQuestion(
                     "answerQuestion",
@@ -164,9 +164,9 @@ public class CoupleQuestionApi {
             );
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
     }
 
@@ -197,10 +197,10 @@ public class CoupleQuestionApi {
             jsonObject.put("createAt", question.getCreatedAt());
 
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             log.info("today question 에러발생");
-            return new JSendResponse(Constants.HTTP_FAIL, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
     }
 
@@ -209,8 +209,8 @@ public class CoupleQuestionApi {
                                         @RequestBody PressForAnswerRequest request) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            Member member = memberService.findMemberByAccessToken(accessToken);
-            Couple couple = coupleService.findCoupleById(member.getCoupleId());
+            Member member = memberService.getCurrentMember();
+            Couple couple = coupleService.getCouple(member);
             String fcmDetail = firebaseCloudMessageService.getFcmPressAnswer(
                     "pressForAnswer",
                     request.index
@@ -218,9 +218,9 @@ public class CoupleQuestionApi {
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
     }
 
@@ -260,9 +260,9 @@ public class CoupleQuestionApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("questions", jsonArray);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
 
     }
@@ -308,9 +308,9 @@ public class CoupleQuestionApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("questions", jsonArray);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
 
     }

@@ -1,9 +1,9 @@
 package com.fgama.pillowtalk.api;
 
 import com.fgama.pillowtalk.components.AmazonS3ResourceStorage;
-import com.fgama.pillowtalk.config.Constants;
-import com.fgama.pillowtalk.domain.Challenge;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.ChattingMessage;
+import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.JSendResponse;
@@ -34,7 +34,6 @@ public class ChattingMessageApiV1 {
 
     /***
      * 채팅 로직
-     *
      */
 
     @PostMapping("/api/v1/chatting-message/text")
@@ -62,7 +61,7 @@ public class ChattingMessageApiV1 {
             jsonObject.put("createAt", chattingMessage.getCreatedAt());
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
             throw e;
 //            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
@@ -106,7 +105,7 @@ public class ChattingMessageApiV1 {
             jsonObject.put("isRead", chattingMessage.getIsRead());
             jsonObject.put("createdAt", chattingMessage.getCreatedAt());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
             throw e;
 //            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
@@ -123,11 +122,11 @@ public class ChattingMessageApiV1 {
             //fcm
             Member partner = memberService.getPartnerByAccessToken(accessToken);
 
-            Challenge challengeServiceByIndex = challengeService.findByIndex(accessToken, Math.toIntExact(request.getIndex()));
+            CoupleChallenge coupleChallengeServiceByIndex = challengeService.findByIndex(accessToken, Math.toIntExact(request.getIndex()));
             String fcmDetail = firebaseCloudMessageService.shareChallengeFcmJsonObject(
                     "challengeChatting",
                     chattingMessage.getIsRead(),
-                    challengeServiceByIndex,
+                    coupleChallengeServiceByIndex,
                     chattingMessage.getNumber(),
                     chattingMessage.getCreatedAt()
             );
@@ -135,12 +134,12 @@ public class ChattingMessageApiV1 {
             //response
             JSONObject coupleChallengeObject = new JSONObject();
 
-            coupleChallengeObject.put("index", challengeServiceByIndex.getNumber());
+            coupleChallengeObject.put("index", coupleChallengeServiceByIndex.getNumber());
 //            coupleChallengeObject.put("category",challengeServiceByIndex.getCategory());
-            coupleChallengeObject.put("challengeTitle", challengeServiceByIndex.getTitle());
-            coupleChallengeObject.put("challengeBody", challengeServiceByIndex.getBody());
-            coupleChallengeObject.put("deadline", challengeServiceByIndex.getTargetDate());
-            coupleChallengeObject.put("creator", memberService.findMemberByAccessToken(accessToken).getNickname());
+            coupleChallengeObject.put("challengeTitle", coupleChallengeServiceByIndex.getTitle());
+            coupleChallengeObject.put("challengeBody", coupleChallengeServiceByIndex.getBody());
+            coupleChallengeObject.put("deadline", coupleChallengeServiceByIndex.getTargetDate());
+            coupleChallengeObject.put("creator", memberService.getCurrentMember().getNickname());
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("coupleChallenge", coupleChallengeObject);
@@ -148,9 +147,9 @@ public class ChattingMessageApiV1 {
             jsonObject.put("isRead", chattingMessage.getIsRead());
             jsonObject.put("createdAt", chattingMessage.getCreatedAt());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -180,10 +179,10 @@ public class ChattingMessageApiV1 {
             jsonObject.put("isRead", chattingMessage.getIsRead());
             jsonObject.put("createAt", chattingMessage.getCreatedAt());
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             log.error("error :", e);
-            return new JSendResponse(Constants.HTTP_FAIL, "voice 채팅 api 실패 " + e);
+            return new JSendResponse(HttpResponse.HTTP_FAIL, "voice 채팅 api 실패 " + e);
         }
     }
 
@@ -213,10 +212,10 @@ public class ChattingMessageApiV1 {
             jsonObject.put("isRead", chattingMessage.getIsRead());
             jsonObject.put("createAt", chattingMessage.getCreatedAt());
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             log.error("error :", e);
-            return new JSendResponse(Constants.HTTP_FAIL, "voice 채팅 api 실패 " + e);
+            return new JSendResponse(HttpResponse.HTTP_FAIL, "voice 채팅 api 실패 " + e);
         }
     }
 
@@ -234,9 +233,9 @@ public class ChattingMessageApiV1 {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("message", message);
             jsonObject.put("isRead", isRead);
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
-            return new JSendResponse(Constants.HTTP_SUCCESS, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, e.toString());
         }
     }
 

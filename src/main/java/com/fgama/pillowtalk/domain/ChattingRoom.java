@@ -1,16 +1,18 @@
 package com.fgama.pillowtalk.domain;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+
 @Getter
 @Setter
+@AllArgsConstructor
+@Builder
+@NoArgsConstructor
+@Entity
 public class ChattingRoom {
     @Id
     @GeneratedValue
@@ -19,13 +21,10 @@ public class ChattingRoom {
 
     private String title;
 
-    private LocalDateTime createdAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "couple_id")
     private Couple couple;
 
-    @OneToMany(mappedBy = "chattingRoom", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "chattingRoom")
     private List<ChattingMessage> messageList = new ArrayList<>();
-
 }

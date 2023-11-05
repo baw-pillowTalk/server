@@ -4,11 +4,9 @@ import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.domain.Question;
-import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.CoupleQuestionRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
-import com.fgama.pillowtalk.repository.MemberRepository;
 import com.fgama.pillowtalk.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +15,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,11 +23,12 @@ import java.util.List;
 public class CoupleQuestionService {
 
     private final CoupleQuestionRepository coupleQuestionRepository;
-    private final MemberRepository memberRepository;
     private final CoupleRepository coupleRepository;
     private final QuestionRepository questionRepository;
 
     private final FirebaseCloudMessageService firebaseCloudMessageService;
+    private final MemberService memberService;
+    private final CoupleService coupleService;
 
     public Long join(CoupleQuestion coupleQuestion) {
         coupleQuestionRepository.save(coupleQuestion);
@@ -42,8 +40,8 @@ public class CoupleQuestionService {
     }
 
     public int getLatestQuestionPageNo(String accessToken) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findById(memberByAccessToken.getCoupleId()).orElseThrow(NullPointerException::new);
+        Member member = this.memberService.getCurrentMember();
+        Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
         Page<CoupleQuestion> byCoupleId = coupleQuestionRepository.findPageByCoupleId(couple.getId(), pageRequest);
@@ -56,8 +54,8 @@ public class CoupleQuestionService {
 
     public CoupleQuestion getRecent(String accessToken) throws NullPointerException {
         //다읽어오면 안됨
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
-        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(memberByAccessToken.getCoupleId());
+        Member member = this.memberService.getCurrentMember();
+        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(member.getCoupleId());
         if (coupleQuestions == null) {
             throw new NullPointerException("커플 질문이 비었음");
         }
@@ -66,8 +64,8 @@ public class CoupleQuestionService {
 
     public CoupleQuestion getCoupleQuestion(String accessToken, int id) throws NullPointerException {
         //다읽어오면 안됨
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
-        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(memberByAccessToken.getCoupleId());
+        Member member = this.memberService.getCurrentMember();
+        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(member.getCoupleId());
         if (coupleQuestions == null) {
             throw new NullPointerException("커플 질문이 비었음");
         }
@@ -75,10 +73,10 @@ public class CoupleQuestionService {
     }
 
     public List<CoupleQuestion> getRecentList(String accessToken, int pageNo) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
+        Member member = this.memberService.getCurrentMember();
         Sort sort = Sort.by(Sort.Direction.ASC, "createdAt");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
-        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(memberByAccessToken.getCoupleId(), pageRequest);
+        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(member.getCoupleId(), pageRequest);
         if (coupleQuestions == null) {
             throw new NullPointerException("커플 질문이 비었음");
         }
@@ -86,12 +84,12 @@ public class CoupleQuestionService {
     }
 
     public List<CoupleQuestion> getRecentListDESC(String accessToken, int pageNo) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(() -> new MemberNotFoundException());
-        List<CoupleQuestion> byCoupleId = coupleQuestionRepository.findByCoupleId(memberByAccessToken.getCoupleId());
+        Member member = this.memberService.getCurrentMember();
+        List<CoupleQuestion> byCoupleId = coupleQuestionRepository.findByCoupleId(member.getCoupleId());
         int whole = byCoupleId.size() / 4;
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         PageRequest pageRequest = PageRequest.of(whole - pageNo, 4, sort);
-        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(memberByAccessToken.getCoupleId(), pageRequest);
+        List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(member.getCoupleId(), pageRequest);
         if (coupleQuestions == null) {
             throw new NullPointerException("커플 질문이 비었음");
         }
@@ -99,7 +97,7 @@ public class CoupleQuestionService {
     }
 
     public CoupleQuestion findByIndex(String accessToken, int index) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(NullPointerException::new);
+        Member member = this.memberService.getCurrentMember();
         Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         List<CoupleQuestion> questionList = coupleQuestionRepository.findByCoupleId(couple.getId());
 
@@ -108,8 +106,8 @@ public class CoupleQuestionService {
 
 
     public CoupleQuestion updateSelfAnswer(String accessToken, int index, String answer) throws NullPointerException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
+        Member member = this.memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(member);
         CoupleQuestion question = coupleQuestionRepository.findByNumberAndCoupleId(index, couple.getId());
         log.info("updateSelfAnswer" + accessToken + index + answer);
 
@@ -141,15 +139,15 @@ public class CoupleQuestionService {
             log.info(String.valueOf(all.size()));
 
             if (coupleQuestions.isEmpty()) {
-                CoupleQuestion coupleQuestion = new CoupleQuestion();
-                coupleQuestion.setSelfAnswer(null);
-                coupleQuestion.setPartnerAnswer(null);
-                coupleQuestion.setCreatedAt(LocalDateTime.now());
-                coupleQuestion.setCouple(couple);
-                coupleQuestion.setQuestion(all.get(0));
-                coupleQuestion.setNumber(coupleQuestions.size());
 
-                coupleQuestionRepository.save(coupleQuestion);
+
+                coupleQuestionRepository.save(CoupleQuestion.builder()
+                        .selfAnswer(null)
+                        .partnerAnswer(null)
+                        .couple(couple)
+                        .question(all.get(0))
+                        .number(coupleQuestions.size())
+                        .build());
 
 
                 String fcmDetail = firebaseCloudMessageService.getQuestionFcmJsonObject(
@@ -198,7 +196,6 @@ public class CoupleQuestionService {
                         CoupleQuestion coupleQuestion = new CoupleQuestion();
                         coupleQuestion.setSelfAnswer(null);
                         coupleQuestion.setPartnerAnswer(null);
-                        coupleQuestion.setCreatedAt(LocalDateTime.now());
                         coupleQuestion.setCouple(couple);
                         coupleQuestion.setQuestion(findQuestion);
                         coupleQuestion.setNumber(coupleQuestions.size());
@@ -244,7 +241,6 @@ public class CoupleQuestionService {
                 CoupleQuestion coupleQuestion = new CoupleQuestion();
                 coupleQuestion.setSelfAnswer(null);
                 coupleQuestion.setPartnerAnswer(null);
-                coupleQuestion.setCreatedAt(LocalDateTime.now());
                 coupleQuestion.setCouple(couple);
                 coupleQuestion.setQuestion(all.get(0));
                 coupleQuestion.setNumber(coupleQuestions.size());
@@ -298,7 +294,6 @@ public class CoupleQuestionService {
                         CoupleQuestion coupleQuestion = new CoupleQuestion();
                         coupleQuestion.setSelfAnswer(null);
                         coupleQuestion.setPartnerAnswer(null);
-                        coupleQuestion.setCreatedAt(LocalDateTime.now());
                         coupleQuestion.setCouple(couple);
                         coupleQuestion.setQuestion(findQuestion);
                         coupleQuestion.setNumber(coupleQuestions.size());
@@ -344,7 +339,6 @@ public class CoupleQuestionService {
                 CoupleQuestion coupleQuestion = new CoupleQuestion();
                 coupleQuestion.setSelfAnswer(null);
                 coupleQuestion.setPartnerAnswer(null);
-                coupleQuestion.setCreatedAt(LocalDateTime.now());
                 coupleQuestion.setCouple(couple);
                 coupleQuestion.setQuestion(all.get(0));
                 coupleQuestion.setNumber(coupleQuestions.size());
@@ -398,7 +392,6 @@ public class CoupleQuestionService {
                         CoupleQuestion coupleQuestion = new CoupleQuestion();
                         coupleQuestion.setSelfAnswer(null);
                         coupleQuestion.setPartnerAnswer(null);
-                        coupleQuestion.setCreatedAt(LocalDateTime.now());
                         coupleQuestion.setCouple(couple);
                         coupleQuestion.setQuestion(findQuestion);
                         coupleQuestion.setNumber(coupleQuestions.size());
@@ -425,7 +418,7 @@ public class CoupleQuestionService {
     }
 
     public int getTotalCount(String accessToken) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(NullPointerException::new);
+        Member member = this.memberService.getCurrentMember();
         Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         List<CoupleQuestion> questionList = coupleQuestionRepository.findByCoupleId(couple.getId());
         return questionList.size();

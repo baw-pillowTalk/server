@@ -13,7 +13,7 @@ spring:
       key-path: ${APPLE_KEY_PATH}
 
 jwt:
-  bearer: ${JWT_BEARER:Bearer}
+  bearer: ${JWT_BEAR4ER:Bearer}
   secret-key: ${JWT_SECRET_KEY}
   access-expiration: ${JWT_ACCESS_EXPIRE:3600000} # 1시간
   refresh-expiration: ${JWT_REFRESH_EXPIRE:86400000} # 1일

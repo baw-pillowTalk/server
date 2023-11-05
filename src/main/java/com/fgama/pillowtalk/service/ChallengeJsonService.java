@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.service;
 
-import com.fgama.pillowtalk.domain.Challenge;
+import com.fgama.pillowtalk.domain.CoupleChallenge;
 import lombok.RequiredArgsConstructor;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -9,16 +9,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ChallengeJsonService {
 
-    public JSONObject getChallengeData(Challenge challenge) {
+    public JSONObject getChallengeData(CoupleChallenge coupleChallenge) {
         JSONObject jsonObject = new JSONObject();
 
-        jsonObject.put("index", challenge.getNumber());
-        jsonObject.put("pageNo", challenge.getNumber() / 4);
-        jsonObject.put("title", challenge.getTitle());
-        jsonObject.put("deadline", challenge.getTargetDate());
-        jsonObject.put("content", challenge.getBody());
-        jsonObject.put("creator", challenge.getCreator());
-        jsonObject.put("isCompleted", challenge.getDone());
+        jsonObject.put("index", coupleChallenge.getNumber());
+        jsonObject.put("pageNo", coupleChallenge.getNumber() / 4);
+        jsonObject.put("title", coupleChallenge.getTitle());
+        jsonObject.put("deadline", coupleChallenge.getTargetDate());
+        jsonObject.put("content", coupleChallenge.getBody());
+        jsonObject.put("creator", coupleChallenge.getCreator());
+        jsonObject.put("isCompleted", coupleChallenge.getDone());
 
         return jsonObject;
     }

@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.api;
 
-import com.fgama.pillowtalk.config.Constants;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.ChattingMessage;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.JSendResponse;
@@ -33,7 +33,7 @@ public class ChattingRoomApiV1 {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             List<ChattingMessage> chattingMessages = chattingMessageService.loadChatList(accessToken, request.getPageNo());
-            Member member = memberService.findMemberByAccessToken(accessToken);
+            Member member = memberService.getCurrentMember();
             JSONArray jsonArray = new JSONArray();
 
             for (ChattingMessage message : chattingMessages) {
@@ -69,7 +69,7 @@ public class ChattingRoomApiV1 {
             jsonObject.put("page", request.getPageNo());
             jsonObject.put("chatting", jsonArray);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
             throw e;
 //            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
@@ -86,9 +86,9 @@ public class ChattingRoomApiV1 {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("pageNo", chattingMessageService.getLatestChatPageNo(accessToken));
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
-            return new JSendResponse(Constants.HTTP_SUCCESS, e.getMessage());
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, e.getMessage());
         }
 
 

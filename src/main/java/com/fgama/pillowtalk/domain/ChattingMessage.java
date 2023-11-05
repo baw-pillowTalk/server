@@ -4,11 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
-@Setter @Getter
-public class ChattingMessage {
+@Setter
+@Getter
+public class ChattingMessage extends BaseEntity {
 
     @Id
     @GeneratedValue
@@ -19,22 +19,19 @@ public class ChattingMessage {
     @JoinColumn(name = "chatting_room_id")
     private ChattingRoom chattingRoom;
 
-    private LocalDateTime createdAt;
-
     private Long number;
 
     private Boolean isRead;
 
     private String resourceUrl;
 
-
+    @Column(name = "chatting_message_type")
     private String type;
-    @Column(length=5000)
+    @Column(length = 5000)
     private String message;
     private Long questionIndex;
     private Long challengeIndex;
     private String emoji;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;

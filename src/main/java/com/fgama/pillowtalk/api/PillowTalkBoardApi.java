@@ -1,6 +1,6 @@
 package com.fgama.pillowtalk.api;
 
-import com.fgama.pillowtalk.config.Constants;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.service.PillowTalkBoardService;
 import lombok.Data;
@@ -22,9 +22,9 @@ public class PillowTalkBoardApi {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             pillowTalkBoardService.addComment(accessToken, request.getTitle(), request.getBody(), request.getEmail());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
 
         }
     }
