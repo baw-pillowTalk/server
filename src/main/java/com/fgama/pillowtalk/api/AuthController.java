@@ -1,85 +1,76 @@
 package com.fgama.pillowtalk.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fgama.pillowtalk.config.Constants;
-import com.fgama.pillowtalk.dto.JSendResponse;
-import com.fgama.pillowtalk.dto.LoginRequestDto;
-import com.fgama.pillowtalk.dto.OauthLoginResponseDto;
-import com.fgama.pillowtalk.service.MemberService;
+import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
+import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
+import com.fgama.pillowtalk.service.AuthService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 /**
- * 1. 회원 상태 체크 (auto-login)
- * 2. 로그인 (re-login)
- * 3. 로그 아웃(logout)
+ * 1. 로그인 (re-login)
+ * 2. 로그 아웃(logout)
+ * 3. 엑시스,리프레시 재발급(reissue)
+ * 4. 회원 탈퇴(withdraw)
  */
 
 @Slf4j
 @RequiredArgsConstructor
 @RestController
 public class AuthController {
-    private final MemberService memberService;
+    private final AuthService authService;
 
     /**
-     * case 01) 처음 애플리케이션을 구동 시켰을 때, 가장 먼저 auto-login API 호출
-     * - 호출 시 프론트에서, access, refresh 체크 후, 재 발급 필요 하다면 재 발급 API 요청
-     * - 호출 시 프론트에서, access, refresh 체크 후, 재 발급 필요 없다면 auto-login API 요청
-     * -> 회원 상태 가져올 수 있음
-     * case 02) 비회원인 경우
-     * - 비회원인 경우 아무 것도 없을 것 -> 프론트에서 login API 호출 -> case 01) 을 따름
+     * kakao,google,naver 소셜 로그인 api
+     * - 서비스 access,refresh token 발급
      **/
-    @GetMapping("/api/v1/member/status")
-    public ResponseEntity<String> getMemberStatus() {
-        return new ResponseEntity<>(this.memberService.getMemberStatus(), HttpStatus.OK);
-    }
-
-    /* auto-login 에서 비회원인 경우 re-login 호출 */
-
-    /***
-     * 재로그인(로그인)
-     *
-     */
     @PostMapping("/api/v1/login")
-    public ResponseEntity<Void> login(
-            @RequestBody @Valid LoginRequestDto request) {
-        return new ResponseEntity<>(this.memberService.login(request), HttpStatus.OK);
-    }
-
-    // apple
-
-    /***
-     * accessToken 재발급 + refresh 재발급
-     */
-    @PostMapping("/api/v1/reissue")
-    public ResponseEntity<OauthLoginResponseDto> renewAccessToken(
-            @RequestBody @Valid RenewAccessTokenRequest request) {
-
+    public ResponseEntity<OauthLoginResponseDto> login(
+            @RequestBody @Valid OauthLoginRequestDto request) {
+        return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
     }
 
     /***
      * 로그아웃
-     * @param authorizationHeader
-     * @return
+     * - member's refresh token 삭제
      */
-    @GetMapping("/api/v1/logout")
-    public JSendResponse logout(@RequestHeader("Authorization") String authorizationHeader) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            memberService.logout(accessToken);
-
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
-        } catch (RuntimeException e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
-
-        }
+    @PostMapping("/api/v1/logout")
+    public ResponseEntity<Long> logout() {
+        return new ResponseEntity<>(this.authService.logout(), HttpStatus.OK);
     }
+
+
+    /***
+     * accessToken 재발급 + refresh 재발급
+     * - jwt 유효성 검사 x -> 이미 유효하지 않은 상태
+     * - jwtAuthenticationFilter 예외 API
+     */
+    @PostMapping("/api/v1/reissue")
+    public ResponseEntity<OauthLoginResponseDto> renewAccessToken(
+            HttpServletRequest httpServletRequest
+    ) {
+        return ResponseEntity.ok(this.authService.reissue(httpServletRequest));
+    }
+
+    /**
+     * - 회원 탈퇴 API
+     **/
+    @DeleteMapping("/api/v1/withdraw")
+    public ResponseEntity<Void> withDraw() {
+        this.authService.withDraw();
+        return ResponseEntity.ok().build();
+    }
+
 
     @Data
     public static class AppleRefreshTokenResponse {
@@ -95,10 +86,5 @@ public class AuthController {
 
         @JsonProperty("token_type")
         private String tokenType;
-    }
-
-    @Data
-    static class RenewAccessTokenRequest {
-        private String refreshToken;
     }
 }

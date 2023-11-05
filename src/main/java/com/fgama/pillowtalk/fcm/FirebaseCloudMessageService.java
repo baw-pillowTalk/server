@@ -1,9 +1,8 @@
 package com.fgama.pillowtalk.fcm;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fgama.pillowtalk.domain.Challenge;
+import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -222,16 +221,15 @@ public class FirebaseCloudMessageService {
         return jsonObject.toJSONString();
     }
 
-    public String shareChallengeFcmJsonObject(String type, Boolean isRead, Challenge challenge, Long index, LocalDateTime createAt) {
+    public String shareChallengeFcmJsonObject(String type, Boolean isRead, CoupleChallenge coupleChallenge, Long index, LocalDateTime createAt) {
 
 
         JSONObject challengeObject = new JSONObject();
-        challengeObject.put("index", challenge.getNumber());
-        challengeObject.put("category", challenge.getCategory());
-        challengeObject.put("challengeTitle", challenge.getTitle());
-        challengeObject.put("challengeBody", challenge.getBody());
-        challengeObject.put("deadline", challenge.getTargetDate());
-        challengeObject.put("creator", challenge.getCreator());
+        challengeObject.put("index", coupleChallenge.getNumber());
+        challengeObject.put("challengeTitle", coupleChallenge.getTitle());
+        challengeObject.put("challengeBody", coupleChallenge.getBody());
+        challengeObject.put("deadline", coupleChallenge.getTargetDate());
+        challengeObject.put("creator", coupleChallenge.getCreator());
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", type);

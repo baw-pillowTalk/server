@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -35,6 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final MemberRepository memberRepository;
 
+    private static void saveAuthentication(Member member) {
+        MemberAuthentication memberAuthentication = new MemberAuthentication(member);
+        SecurityContextHolder.getContext().setAuthentication(memberAuthentication);
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -49,13 +55,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String accessToken = this.jwtService.extractAccessTokenFromRequest(request)
                     .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("No Access Token is exist"));
 
-            /* 2. access token 에서 unique claim 가져와서 Member 조회 */
-            Member member = this.memberRepository.findById(Long.parseLong(this.jwtService.extractUniqueClaimFromPayload(accessToken)))
-                    .orElseThrow(() -> new UsernameNotFoundException("No Member is exist"));
+            if (StringUtils.hasText(accessToken) && this.jwtService.validateToken(accessToken)) {
 
-            /* 3. SecurityContext 에 AbstractAuthenticationToken 을 상속한 MemberAuthentication 저장 */
-            MemberAuthentication memberAuthentication = new MemberAuthentication(member);
-            SecurityContextHolder.getContext().setAuthentication(memberAuthentication);
+                /* 2. access token 에서 unique claim 가져와서 Member 조회 */
+                Member member = this.memberRepository.findById(Long.parseLong(this.jwtService.extractSubjectFromAccessToken(accessToken)))
+                        .orElseThrow(() -> new UsernameNotFoundException("일치하는 회원이 존재하지 않습니다."));
+
+                /* 3. SecurityContext 에 AbstractAuthenticationToken 을 상속한 MemberAuthentication 저장 */
+                saveAuthentication(member);
+            }
         } catch (AuthenticationException exception) {
             log.info("JwtAuthentication UnauthorizedUserException!");
         }

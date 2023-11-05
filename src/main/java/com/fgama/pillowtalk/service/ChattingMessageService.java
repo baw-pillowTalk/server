@@ -5,10 +5,8 @@ import com.fgama.pillowtalk.domain.ChattingMessage;
 import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
-import com.fgama.pillowtalk.exception.MemberNotFoundException;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
-import com.fgama.pillowtalk.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,8 +22,9 @@ import java.util.List;
 public class ChattingMessageService {
     private final ChattingMessageRepository chattingMessageRepository;
     private final AmazonS3ResourceStorage amazonS3ResourceStorage;
-    private final MemberRepository memberRepository;
     private final CoupleRepository coupleRepository;
+
+    private final MemberService memberService;
 
     public Long join(ChattingMessage chattingMessage) {
         ChattingMessage chattingMessage1 = chattingMessageRepository.save(chattingMessage);
@@ -41,21 +40,21 @@ public class ChattingMessageService {
     }
 
     public List<ChattingMessage> loadChatList(String accessToken, int pageNo) throws NullPointerException {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findById(memberByAccessToken.getCoupleId()).orElseThrow(NullPointerException::new);
+        Member member = this.memberService.getCurrentMember();
+        Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         log.info(couple.getId().toString());
         Sort sort = Sort.by(Sort.Direction.ASC, "createdAt");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
-        Page<ChattingMessage> byChattingRoom = chattingMessageRepository.findByChattingRoom(couple.getChattingRooms().get(0), pageRequest);
+        Page<ChattingMessage> byChattingRoom = chattingMessageRepository.findByChattingRoom(couple.getChattingRoom(), pageRequest);
         return byChattingRoom.getContent();
     }
 
     public int getLatestChatPageNo(String accessToken) {
-        Member memberByAccessToken = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findById(memberByAccessToken.getCoupleId()).orElseThrow(NullPointerException::new);
+        Member member = this.memberService.getCurrentMember();
+        Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
-        Page<ChattingMessage> byChattingRoom = chattingMessageRepository.findByChattingRoom(couple.getChattingRooms().get(0), pageRequest);
+        Page<ChattingMessage> byChattingRoom = chattingMessageRepository.findByChattingRoom(couple.getChattingRoom(), pageRequest);
         if (byChattingRoom.getTotalPages() == 0) {
             return byChattingRoom.getTotalPages();
         } else {

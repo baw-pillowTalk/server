@@ -1,8 +1,8 @@
 package com.fgama.pillowtalk.api;
 
-import com.fgama.pillowtalk.config.Constants;
-import com.fgama.pillowtalk.domain.Challenge;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.Couple;
+import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
@@ -25,7 +25,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class ChallengeApi {
+public class ChallengeController {
     private final ChallengeService challengeService;
     private final MemberService memberService;
     private final CoupleService coupleService;
@@ -43,7 +43,7 @@ public class ChallengeApi {
             jsonObject.put("completedCount", counts.get(2));
 
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -54,11 +54,11 @@ public class ChallengeApi {
                                       @PathVariable("id") long id) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            Challenge challenge = challengeService.getChallenge(accessToken, id);
+            CoupleChallenge coupleChallenge = challengeService.getChallenge(accessToken, id);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, challengeJsonService.getChallengeData(challenge));
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, challengeJsonService.getChallengeData(coupleChallenge));
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -70,9 +70,9 @@ public class ChallengeApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("pageNo", latestChallengePageNo);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
 
     }
@@ -83,20 +83,20 @@ public class ChallengeApi {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
 
-            List<Challenge> list = challengeService.getInProgressChallengeList(accessToken, request.getPageNo());
+            List<CoupleChallenge> list = challengeService.getInProgressChallengeList(accessToken, request.getPageNo());
 
             JSONArray jsonArray = new JSONArray();
             for (int i = list.size() - 1; i >= 0; i--) {
-                Challenge challenge = list.get(i);
+                CoupleChallenge coupleChallenge = list.get(i);
                 JSONObject jsonMessage = new JSONObject();
-                jsonMessage.put("index", challenge.getNumber());
-                jsonMessage.put("pageNo", challenge.getNumber() / 4);
+                jsonMessage.put("index", coupleChallenge.getNumber());
+                jsonMessage.put("pageNo", coupleChallenge.getNumber() / 4);
 //                jsonMessage.put("category", challenge.getCategory());
-                jsonMessage.put("title", challenge.getTitle());
-                jsonMessage.put("deadline", challenge.getTargetDate());
-                jsonMessage.put("content", challenge.getBody());
-                jsonMessage.put("creator", challenge.getCreator());
-                jsonMessage.put("isCompleted", challenge.getDone());
+                jsonMessage.put("title", coupleChallenge.getTitle());
+                jsonMessage.put("deadline", coupleChallenge.getTargetDate());
+                jsonMessage.put("content", coupleChallenge.getBody());
+                jsonMessage.put("creator", coupleChallenge.getCreator());
+                jsonMessage.put("isCompleted", coupleChallenge.getDone());
                 jsonArray.add(jsonMessage);
             }
 
@@ -104,9 +104,9 @@ public class ChallengeApi {
             jsonObject.put("challengeList", jsonArray);
 
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -118,9 +118,9 @@ public class ChallengeApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("pageNo", latestChallengePageNo);
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
 
     }
@@ -131,21 +131,21 @@ public class ChallengeApi {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
 
-            List<Challenge> list = challengeService.getDoneChallengeList(accessToken, request.getPageNo());
+            List<CoupleChallenge> list = challengeService.getDoneChallengeList(accessToken, request.getPageNo());
 
             JSONArray jsonArray = new JSONArray();
 
             for (int i = list.size() - 1; i >= 0; i--) {
-                Challenge challenge = list.get(i);
+                CoupleChallenge coupleChallenge = list.get(i);
                 JSONObject jsonMessage = new JSONObject();
-                jsonMessage.put("index", challenge.getNumber());
-                jsonMessage.put("pageNo", challenge.getNumber() / 4);
+                jsonMessage.put("index", coupleChallenge.getNumber());
+                jsonMessage.put("pageNo", coupleChallenge.getNumber() / 4);
 //                jsonMessage.put("category", challenge.getCategory());
-                jsonMessage.put("title", challenge.getTitle());
-                jsonMessage.put("deadline", challenge.getTargetDate());
-                jsonMessage.put("content", challenge.getBody());
-                jsonMessage.put("creator", challenge.getCreator());
-                jsonMessage.put("isCompleted", challenge.getDone());
+                jsonMessage.put("title", coupleChallenge.getTitle());
+                jsonMessage.put("deadline", coupleChallenge.getTargetDate());
+                jsonMessage.put("content", coupleChallenge.getBody());
+                jsonMessage.put("creator", coupleChallenge.getCreator());
+                jsonMessage.put("isCompleted", coupleChallenge.getDone());
                 jsonArray.add(jsonMessage);
             }
 
@@ -153,9 +153,9 @@ public class ChallengeApi {
             jsonObject.put("challengeList", jsonArray);
 
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -164,25 +164,25 @@ public class ChallengeApi {
                                       @RequestBody AddChallengeRequest request) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            Member member = memberService.findMemberByAccessToken(accessToken);
+            Member member = memberService.getCurrentMember();
 
             Long coupleId = member.getCoupleId();
-            Couple couple = coupleService.findCoupleById(coupleId);
+            Couple couple = coupleService.getCouple(member);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
-            Challenge challenge = challengeService.addChallenge(accessToken, request.getTitle(), request.getContent(), request.getDeadline());
+            CoupleChallenge coupleChallenge = challengeService.addChallenge(accessToken, request.getTitle(), request.getContent(), request.getDeadline());
             String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
                     "addChallenge",
-                    challenge.getNumber()
+                    coupleChallenge.getNumber()
 
             );
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("index", challenge.getNumber());
+            jsonObject.put("index", coupleChallenge.getNumber());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -191,23 +191,21 @@ public class ChallengeApi {
                                          @RequestBody UpdateChallengeRequest request) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            Member member = memberService.findMemberByAccessToken(accessToken);
-
-            Long coupleId = member.getCoupleId();
-            Couple couple = coupleService.findCoupleById(coupleId);
+            Member member = memberService.getCurrentMember();
+            Couple couple = coupleService.getCouple(member);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
 
-            Challenge challenge = challengeService.updateChallenge(accessToken, request.getIndex(), request.getTitle(), request.getContent(), request.getDeadline());
+            CoupleChallenge coupleChallenge = challengeService.updateChallenge(accessToken, request.getIndex(), request.getTitle(), request.getContent(), request.getDeadline());
             String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
                     "modifyChallenge",
-                    challenge.getNumber()
+                    coupleChallenge.getNumber()
 
             );
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -218,10 +216,9 @@ public class ChallengeApi {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             challengeService.deleteChallenge(accessToken, request.getIndex());
-            Member member = memberService.findMemberByAccessToken(accessToken);
+            Member member = memberService.getCurrentMember();
 
-            Long coupleId = member.getCoupleId();
-            Couple couple = coupleService.findCoupleById(coupleId);
+            Couple couple = coupleService.getCouple(member);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
 
             String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
@@ -232,9 +229,9 @@ public class ChallengeApi {
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
             challengeService.sortNumber(accessToken);
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -244,10 +241,9 @@ public class ChallengeApi {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             challengeService.doneChallenge(accessToken, request.getIndex());
-            Member member = memberService.findMemberByAccessToken(accessToken);
+            Member member = memberService.getCurrentMember();
 
-            Long coupleId = member.getCoupleId();
-            Couple couple = coupleService.findCoupleById(coupleId);
+            Couple couple = coupleService.getCouple(member);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
 
             String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
@@ -257,9 +253,9 @@ public class ChallengeApi {
             );
             firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
-            return new JSendResponse(Constants.HTTP_SUCCESS, null);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (Exception e) {
-            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
+            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }
     }
 
@@ -270,13 +266,13 @@ public class ChallengeApi {
     @Scheduled(cron = "0  0  0  *  *  *")
     public void arrangeChallenge() {
         log.info("챌린지 업데이트");
-        List<Challenge> all = challengeService.findAll();
-        for (Challenge challenge : all) {
-            int compareTo = challenge.getTargetDate().compareTo(LocalDateTime.now());
+        List<CoupleChallenge> all = challengeService.findAll();
+        for (CoupleChallenge coupleChallenge : all) {
+            int compareTo = coupleChallenge.getTargetDate().compareTo(LocalDateTime.now());
 
             if (compareTo < 0) {
-                challenge.setDone(true);
-                challengeService.join(challenge);
+                coupleChallenge.setDone(true);
+                challengeService.join(coupleChallenge);
             }
         }
     }

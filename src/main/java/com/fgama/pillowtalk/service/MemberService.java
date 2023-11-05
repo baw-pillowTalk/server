@@ -1,36 +1,39 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.components.FileDetail;
+import com.fgama.pillowtalk.constant.MemberStatus;
+import com.fgama.pillowtalk.constant.SnsType;
 import com.fgama.pillowtalk.domain.*;
-import com.fgama.pillowtalk.dto.LoginRequestDto;
-import com.fgama.pillowtalk.exception.MemberNotFoundException;
-import com.fgama.pillowtalk.exception.auth.UserNotFoundException;
-import com.fgama.pillowtalk.repository.*;
+import com.fgama.pillowtalk.dto.member.*;
+import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
+import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
+import com.fgama.pillowtalk.repository.ChattingMessageRepository;
+import com.fgama.pillowtalk.repository.CoupleRepository;
+import com.fgama.pillowtalk.repository.MemberRepository;
 import com.fgama.pillowtalk.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.regex.Pattern;
+
+import static com.fgama.pillowtalk.constant.MemberStatus.SOLO;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class MemberService {
-    public static final String REGEXP = "^[a-z|A-Z|ㄱ-ㅎ|가-힣]{1,10}+$";
     private final MemberRepository memberRepository;
-    private final ChattingRoomRepository chattingRoomRepository;
-    private final MemberConfigRepository memberConfigRepository;
     private final ChattingMessageRepository chattingMessageRepository;
-    private final ChallengeRepository challengeRepository;
     private final CoupleRepository coupleRepository;
-    private final CoupleQuestionRepository coupleQuestionRepository;
     private final FileUploadService fileUploadService;
+
+    @Value("${service.image-url}")
+    private String serviceImageUrl;
+    @Value("${service.default-image-url}")
+    private String serviceDefaultImageUrl;
 
     public Long join(Member member) {
 //        validateDuplicateEamilAndSnsType(member);
@@ -39,73 +42,49 @@ public class MemberService {
         return member1.getId();
     }
 
-    public Optional<Member> findOptionalMemberByState(String state) {
-        Optional<Member> findMember = memberRepository.findOptionalMemberByState(state);
-        return findMember;
+    /**
+     * - 해당 code 을 가지는 Member 정보 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public Member findMemberByInviteCode(String code) throws RuntimeException {
+        return this.memberRepository.findMemberByInviteCode(code)
+                .orElseThrow(() -> new MemberNotFoundException("일치하는 회원이 존재하지 않습니다."));
     }
 
-    public Member findOptionalMemberByInviteCode(String code) throws RuntimeException {
-        Optional<Member> findMember = memberRepository.findOptionalMemberByInviteCode(code);
-        return findMember.orElseThrow(() -> new RuntimeException("not found member by generateCode"));
-    }
-
-    public Optional<Member> findOptionalMemberByUniqueId(String uniqueId) {
-        Optional<Member> optionalMemberByName = memberRepository.findOptionalMemberByUniqueId(uniqueId);
-        return optionalMemberByName;
-    }
-
-    public Member findOptionalMemberByUniqueIdV1(String uniqueId) throws NullPointerException {
-        Member optionalMemberByName = memberRepository.findOptionalMemberByUniqueId(uniqueId).orElseThrow(NullPointerException::new);
-        return optionalMemberByName;
-    }
-
-    public Member findMemberByUniqueId(String uniqueId) {
-        return memberRepository.findMemberByUniqueId(uniqueId);
+    /**
+     * - oauthId, snsType 에 해당하는 사용자 정보 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public Member findMemberByOauthIdAndSnsType(String oauthId, SnsType snsType) {
+        return memberRepository.findMemberByOauthIdAndSnsType(oauthId, snsType)
+                .orElseThrow(() -> new MemberNotFoundException("일치하는 회원이 존재하지 않습니다."));
 
     }
 
-    public Optional<Member> findOptionalMemberByAccessToken(String accessToken) {
-        Optional<Member> optionalMemberByAccessToken = memberRepository.findOptionalMemberByAccessToken(accessToken);
-        return optionalMemberByAccessToken;
-    }
-
-    public Member findMemberByAccessTokenThrow(String accessToken) {
-        return memberRepository.findOptionalMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-    }
-
-    public void changeChatRoomStatus(String accessToken, Boolean isInChat) throws NullPointerException {
-        Member member = memberRepository.findOptionalMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
+    @Transactional
+    public void changeChatRoomStatus(Boolean isInChat) throws NullPointerException {
+        Member member = this.getCurrentMember();
         member.setChattingRoomStatus(isInChat);
         if (isInChat) {
-            Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
+            Couple couple = this.coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
-            List<ChattingMessage> chattingMessages = couple.getChattingRooms().get(0).getMessageList();
+            List<ChattingMessage> chattingMessages = couple.getChattingRoom().getMessageList();
 
             for (ChattingMessage message : chattingMessages) {
                 if (message.getMember() == partner) {
                     message.setIsRead(true);
                 }
             }
-
-            coupleRepository.save(couple);
         }
-        log.info("chatting room status 변경 :" + member.getOauthId() + "현재상태 :" + isInChat);
-        memberRepository.save(member);
     }
 
     public Member findMemberByRefreshToken(String refreshToken) throws NullPointerException {
         return memberRepository.findMemberByRefreshToken(refreshToken).orElseThrow(NullPointerException::new);
     }
 
-    public Member findMemberByAccessToken(String accessToken) throws NullPointerException {
-        Optional<Member> findMember = memberRepository.findMemberByAccessToken(accessToken);
-        return findMember.orElseThrow(() -> new MemberNotFoundException("not found member by accessToken"));
-    }
-
     public String findPartnerLastMessage(String accessToken) throws NullPointerException {
-        Optional<Member> findMember = memberRepository.findMemberByAccessToken(accessToken);
-        Member member = findMember.orElseThrow(() -> new MemberNotFoundException("not found member by accessToken"));
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
+        Member member = this.getCurrentMember();
+        Couple couple = this.getCouple(member);
         Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
         ChattingMessage message = chattingMessageRepository.findFirstByMemberIdOrderByCreatedAtDesc(partner.getId());
         String result;
@@ -140,9 +119,8 @@ public class MemberService {
     }
 
     public Boolean IsPartnerLastMessageRead(String accessToken) throws NullPointerException {
-        Optional<Member> findMember = memberRepository.findMemberByAccessToken(accessToken);
-        Member member = findMember.orElseThrow(() -> new MemberNotFoundException("not found member by accessToken"));
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
+        Member member = this.getCurrentMember();
+        Couple couple = this.getCouple(member);
         Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
         ChattingMessage message = chattingMessageRepository.findFirstByMemberIdOrderByCreatedAtDesc(partner.getId());
         if (message != null) {
@@ -154,211 +132,33 @@ public class MemberService {
 
     }
 
-    public void setFcmToken(String accessToken, String fcmToken) throws NullPointerException {
-        Optional<Member> findMember = memberRepository.findMemberByAccessToken(accessToken);
-        Member member = findMember.orElseThrow(() -> new MemberNotFoundException("not found member by accessToken"));
-        member.setFcmToken(fcmToken);
-        memberRepository.save(member);
+    @Transactional
+    public void updateFcmToken(UpdateFcmTokenRequestDto request) throws NullPointerException {
+        this.getCurrentMember().setFcmToken(request.getFcmToken());
     }
 
-    public Member getPartnerByAccessToken(String accessToken) throws NullPointerException {
-        Member findMember = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findCoupleById(findMember.getCoupleId());
-
-        return (couple.getSelf() == findMember) ? couple.getPartner() : couple.getSelf();
-    }
 
     public String getMyPosition(String accessToken) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(MemberNotFoundException::new);
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
+        Member member = this.getCurrentMember();
+        Couple couple = getCouple(member);
 
         return (couple.getSelf() == member) ? "self" : "partner";
     }
 
-    public Member updateNickNameByAccessToken(String accessToken, String nickName) throws IllegalArgumentException {
-        Optional<Member> findMember = memberRepository.findMemberByAccessToken(accessToken);
-        if (findMember.isPresent()) {
-            Member member = findMember.get();
-            member.setNickname(nickName);
-            member = memberRepository.save(member);
-            return member;
-        } else {
-            throw new IllegalArgumentException("Invalid access token");
-        }
-    }
-
-    @Transactional
-    public void delelteMember(Member member) {
-        coupleRepository.deleteById(member.getCoupleId());
-        memberRepository.delete(member);
-    }
-
-    @Transactional
-    public void deleteMember(Member member) {
-        if (member.getLoginState().equals("solo")) {
-            memberRepository.delete(member);
-        }
-    }
-
-//    public String isMember(Member member){
-//
-//    }
-
-    @Transactional
-    public void deleteMemberByAccessToken(String accessToken) {
-        Member member = findOptionalMemberByAccessToken(accessToken).orElseThrow(() -> new RuntimeException("Member not found"));
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
-        // delete chatting messages
-        couple.getChattingRooms().forEach(chattingRoom -> chattingRoom.getMessageList().clear());
-        // delete chatting rooms
-        couple.getChattingRooms().clear();
-        // delete couple
-        coupleRepository.delete(couple);
-
-//        List<Alert> alerts = member.getAlertList();
-//
-//        // delete all alerts related to member
-//        alerts.forEach(alert -> alertRepository.delete(alert));
-
-
-        memberRepository.deleteMemberByAccessToken(accessToken);
-
-    }
-
-    public Member SignUp(String accessToken, String refreshToken, String sub, Long expiresIn,
-                         Boolean marketingConsent, String nickName, String fcmToken, String snsType) {
-
-        Member newMember = new Member();
-        newMember.setNickname(nickName);
-        newMember.setState(null);
-        newMember.setMarketingConsent(marketingConsent);
-        newMember.setExpiresIn(expiresIn);
-//                newMember.setOs(request.getOs()); //줄수있나?
-        newMember.setSnsType(snsType);
-        newMember.setFcmToken(fcmToken);
-        newMember.setRefreshToken(refreshToken);
-        newMember.setAccessToken(accessToken);
-        newMember.setOauthId(sub);
-        newMember.setLoginState("solo");
-        newMember.setEmoTitle("temptation");
-
-        MemberConfig memberConfig = new MemberConfig();
-        memberConfigRepository.save(memberConfig);
-        newMember.setMemberConfig(memberConfig);
-
-        int leftLimit = 48; // numeral '0'
-        int rightLimit = 122; // letter 'z'
-        int targetStringLength = 6;
-        Random random = new Random();
-
-        String generatedString = random.ints(leftLimit, rightLimit + 1)
-                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                .limit(targetStringLength)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
-
-        Optional<Member> optionalMemberByGenerateCode = memberRepository.findOptionalMemberByInviteCode(generatedString);
-
-        if (optionalMemberByGenerateCode.isPresent()) {
-            random = new Random();
-
-            generatedString = random.ints(leftLimit, rightLimit + 1)
-                    .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                    .limit(targetStringLength)
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
-        }
-        newMember.setInviteCode(generatedString);
-
-        //todo image process
-        MemberImage MemberImage = new MemberImage();
-        MemberImage.setImagePath("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default.png");
-        MemberImage.setFile_name("default");
-        MemberImage.setUrl("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default.png");
-        newMember.setMemberImage(MemberImage);
-        return memberRepository.save(newMember);
-    }
-
-    public String callbackAppleAndroid(String accessToken, String refreshToken, String sub, Long expiresIn, String state, String snsType) {
-        Member newMember = new Member();
-
-        newMember.setNickname(null);
-        newMember.setState(state);
-        newMember.setMarketingConsent(null);
-        newMember.setExpiresIn(expiresIn);
-//                newMember.setOs(request.getOs()); //줄수있나?
-        newMember.setSnsType(snsType);
-//                newMember.setFcmToken(request.getFcmToken());
-        newMember.setRefreshToken(refreshToken);
-        newMember.setAccessToken(accessToken);
-        newMember.setOauthId(sub);
-        newMember.setLoginState("ready");
-        newMember.setEmoTitle("temptation");
-
-        int leftLimit = 48; // numeral '0'
-        int rightLimit = 122; // letter 'z'
-        int targetStringLength = 6;
-        Random random = new Random();
-
-        String generatedString = random.ints(leftLimit, rightLimit + 1)
-                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                .limit(targetStringLength)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
-
-        Optional<Member> optionalMemberByGenerateCode = memberRepository.findOptionalMemberByInviteCode(generatedString);
-
-        if (optionalMemberByGenerateCode.isPresent()) {
-            random = new Random();
-
-            generatedString = random.ints(leftLimit, rightLimit + 1)
-                    .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                    .limit(targetStringLength)
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
-        }
-        newMember.setInviteCode(generatedString);
-
-        //todo image process
-        MemberImage MemberImage = new MemberImage();
-        MemberImage.setImagePath("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default.png");
-        MemberImage.setFile_name("default");
-        MemberImage.setUrl("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default.png");
-        newMember.setMemberImage(MemberImage);
-
-        memberRepository.save(newMember);
-        return "signUp";
-    }
 
     public Member SignUpAppleAndroid(Member member, Boolean marketingConsent, String nickName, String fcmToken) {
         member.setNickname(nickName);
         member.setMarketingConsent(marketingConsent);
         member.setFcmToken(fcmToken);
         member.setNickname(nickName);
-        member.setLoginState("solo");
+        member.setMemberStatus(SOLO);
 
         return memberRepository.save(member);
 
     }
 
-    public void logout(String accessToken) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-        member.setFcmToken(null);
-        memberRepository.save(member);
-        //accessToken만료시키기
-    }
-
-    public void setPassword(String accessToken, String password, String questionType, String answer) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-        member.getMemberConfig().setPassword(password);
-        member.getMemberConfig().setLock(true);
-        member.getMemberConfig().setQuestionType(questionType);
-        member.getMemberConfig().setAnswer(answer);
-        memberRepository.save(member);
-    }
-
     public void updatePassword(String accessToken, String password) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.getCurrentMember();
         if (member.getMemberConfig().getLock()) {
             member.getMemberConfig().setPassword(password);
         } else {
@@ -369,7 +169,7 @@ public class MemberService {
     }
 
     public void unlockPassword(String accessToken) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.getCurrentMember();
         if (member.getMemberConfig().getLock()) {
             member.getMemberConfig().setLock(false);
             member.getMemberConfig().setPassword(null);
@@ -383,41 +183,17 @@ public class MemberService {
 
     public MemberConfig getPasswordData(String accessToken) throws RuntimeException {
 
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.getCurrentMember();
         if (member.getMemberConfig().getLock()) {
             return member.getMemberConfig();
         } else {
             throw new RuntimeException("잠금상태가 아닙니다.");
         }
-
-
     }
 
-    @Transactional
-    public void deleteMyAccount(String accessToken) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-        Couple couple = coupleRepository.findCoupleById(member.getCoupleId());
-        memberConfigRepository.delete(member.getMemberConfig());
-
-        for (Challenge challenge : couple.getChallenges()) {
-            challengeRepository.delete(challenge);
-        }
-
-        for (ChattingRoom chattingRoom : couple.getChattingRooms()) {
-            chattingRoomRepository.delete(chattingRoom);
-        }
-
-        for (CoupleQuestion coupleQuestion : couple.getCoupleQuestions()) {
-            coupleQuestionRepository.delete(coupleQuestion);
-        }
-
-        coupleRepository.delete(couple);
-
-        memberRepository.delete(member);
-    }
 
     public void checkPassword(String accessToken, String password) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.getCurrentMember();
         if (!password.equals(member.getMemberConfig().getPassword())) {
             throw new RuntimeException("비밀번호 틀림");
         }
@@ -425,81 +201,159 @@ public class MemberService {
     }
 
     public boolean validAnswer(String accessToken, String answer) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-        //            throw new RuntimeException("답변 틀림");
+        Member member = this.getCurrentMember();
         return answer.equals(member.getMemberConfig().getAnswer());
 
     }
 
-    public void updateProfileDeaultImage(String accessToken, Long defaultProfile) {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-
-
-        MemberImage MemberImage = new MemberImage();
-        MemberImage.setImagePath("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default" + defaultProfile + ".png");
-        MemberImage.setFile_name("default");
-        MemberImage.setUrl("https://s3.ap-northeast-2.amazonaws.com/pillow.images/images/default" + defaultProfile + ".png");
-
-        member.setMemberImage(MemberImage);
-        memberRepository.save(member);
+    @Transactional
+    public void updateToDefaultImage(Long defaultImage) {
+        Member member = getCurrentMember();
+        member.updateMemberImage(MemberImage.builder()
+                .imagePath(serviceDefaultImageUrl + defaultImage + ".png")
+                .fileName("default")
+                .url(serviceDefaultImageUrl + defaultImage + ".png")
+                .build());
     }
 
-    public void updateProfileUserImage(String accessToken, MultipartFile userProfile) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-
-        FileDetail fileDetail = fileUploadService.save(userProfile);
-        MemberImage MemberImage = member.getMemberImage();
-
-        MemberImage.setImagePath(fileDetail.getPath());
-        MemberImage.setFile_name(fileDetail.getName());
-        MemberImage.setUrl("https://s3.ap-northeast-2.amazonaws.com/" + "pillow.images/" + fileDetail.getPath());
-
-        member.setMemberImage(MemberImage);
-        memberRepository.save(member);
+    @Transactional
+    public void updateMyProfileImage(UpdateProfileImageRequestDto request) throws RuntimeException {
+        FileDetail fileDetail = this.fileUploadService.save(request.getMemberProfileImage());
+        MemberImage memberImage = MemberImage.builder()
+                .fileName(fileDetail.getName())
+                .imagePath(fileDetail.getPath())
+                .url(serviceDefaultImageUrl + fileDetail.getPath())
+                .build();
+        Member member = this.getCurrentMember();
+        member.updateMemberImage(memberImage);
     }
 
     public Boolean checkNicknameChangeExceed(String accessToken) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
+        Member member = this.getCurrentMember();
         log.info(member.getNicknameChangeCount().toString());
         return member.getNicknameChangeCount() > 0;
     }
 
-    @Transactional
-    public void setNickname(String accessToken, String nickname) throws RuntimeException {
-        Member member = memberRepository.findMemberByAccessToken(accessToken).orElseThrow(RuntimeException::new);
-        if (member.getNicknameChangeCount() <= 0) {
-            throw new RuntimeException("닉네임 변경 가능 횟수가 없습니다.");
-        }
-        boolean isValidUserId = Pattern.matches(REGEXP, nickname);
-        if (!isValidUserId) {
-            throw new RuntimeException("닉네임 형식 오류 입니다.");
-        }
-//
-
-        member.setNickname(nickname);
-        member.setNicknameChangeCount(member.getNicknameChangeCount() - 1);
-        memberRepository.save(member);
-
+    public Member getPartnerByAccessToken(String accessToken) throws NullPointerException {
+        Member findMember = this.getCurrentMember();
+        Couple couple = getCouple(findMember);
+        return (couple.getSelf() == findMember) ? couple.getPartner() : couple.getSelf();
     }
 
 
-    public List<Member> findAll() {
-        return memberRepository.findAll();
+    @Transactional(readOnly = true)
+    public GetProfileImageResponseDto getPartnerProfileImage() {
+        Member member = this.getCurrentMember();
+        Couple couple = this.getCouple(member);
+        Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
+        return partner.getMemberImage().toGetPartnerImageResponseDto();
     }
 
-    @Transactional
-    public String getMemberStatus() {
-        return this.memberRepository.findById(SecurityUtil.getCurrentUserId())
-                .orElseThrow(() -> new UserNotFoundException("일치하는 회원이 존재하지 않습니다."))
-                .getLoginState();
+    @Transactional(readOnly = true)
+    public GetProfileImageResponseDto getMyProfileImage() {
+        Member member = this.getCurrentMember();
+        return member.getMemberImage().toGetPartnerImageResponseDto();
     }
 
     @Transactional
-    public Void login(LoginRequestDto request) {
-        this.processOauthLogin()
+    public void updateNickname(UpdateNicknameRequestDto request) throws RuntimeException {
+        this.getCurrentMember().setNickname(request.getNickname());
     }
 
-    private Member saveUser(LoginRequestDto request) {
-        return this.memberRepository.findMEmber
+    /**
+     * - 처음 앱 구동시 호출 되는 회원 상태 호출 API
+     **/
+    @Transactional(readOnly = true)
+    public MemberStatus getMemberStatus() {
+        return this.getCurrentMember().getMemberStatus();
+    }
+
+    /**
+     * - 회원 초대 코드 가져오기 API
+     **/
+    @Transactional(readOnly = true)
+    public String getInviteCode() {
+        return this.getCurrentMember().getInviteCode();
+    }
+
+    public Member getMemberById(Long id) {
+        return this.memberRepository.findById(id)
+                .orElseThrow(() -> new MemberNotFoundException("일치하는 회원이 존재하지 않습니다."));
+    }
+
+    public Member getCurrentMember() {
+        return this.getMemberById(SecurityUtil.getMemberId());
+    }
+
+    public MemberConfig getCurrentMemberConfig() {
+        return this.getCurrentMember().getMemberConfig();
+    }
+
+
+    /**
+     * - 회원 정보 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public GetMemberInfoResponseDto getMemberInfo() {
+        return GetMemberInfoResponseDto.from(this.getCurrentMember());
+    }
+
+    /**
+     * - 파트너 정보 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public GetPartnerInfoResponseDto getPartnerInfo() {
+        Member self = this.getCurrentMember();
+        Couple couple = this.getCouple(self);
+        return GetPartnerInfoResponseDto.from(
+                (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf()
+        );
+    }
+
+    /**
+     * - 회원 설정 정보 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public GetMemberConfigInfoResponseDto getMemberConfig() {
+        return GetMemberConfigInfoResponseDto.from(this.getCurrentMemberConfig());
+    }
+
+    /**
+     * = 회원 언어 설정하기
+     **/
+    @Transactional
+    public Void setMemberLanguage(SetMemberLanguageRequestDto request) {
+        this.getCurrentMemberConfig().setMemberLanguage(request.getLanguage());
+        return null;
+    }
+
+    /**
+     * - 회원 비밀번호 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public String getMemberPassword() {
+        return this.getCurrentMemberConfig().getPassword();
+    }
+
+    /**
+     * - 회원 비밀번호 설정하기
+     **/
+    @Transactional
+    public Void setMemberPassword(SetMemberPasswordRequestDto request) {
+        return this.getCurrentMemberConfig().setMemberPassword(request);
+    }
+
+    /**
+     * - 회원 비밀번호 업데이트
+     **/
+    @Transactional
+    public Void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
+        return this.getCurrentMemberConfig().updateMemberPassword(request);
+    }
+
+
+    private Couple getCouple(Member member) {
+        return coupleRepository.findCoupleById(member.getCoupleId())
+                .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플 데이터가 존재하지 않습니다."));
     }
 }

@@ -1,41 +1,54 @@
 package com.fgama.pillowtalk.domain;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fgama.pillowtalk.constant.MemberStatus;
+import com.fgama.pillowtalk.constant.Role;
+import com.fgama.pillowtalk.constant.SnsType;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-public class Member {
+public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
     private Long id;
-
     @Column(unique = true)
     private String oauthId;
     private String nickname;
-    //회원 정보
-    private String accessToken;
+
+    @Column(unique = true)
     private String refreshToken;
+
     private Long coupleId;
     private String fcmToken;
-    private String snsType;
+    @Column(unique = true)
     private String inviteCode;
-    private Long expiresIn;
-    private String loginState;
-    private String emoTitle; //시그널과 연동
-    //설정값
+    private String emoTitle;
+
     private Boolean chattingRoomStatus;
     private Integer nicknameChangeCount;
     private Boolean marketingConsent;
     //android apple sns 로그인시 사용
     private String state;
+
+    @Enumerated(EnumType.STRING)
+    private MemberStatus memberStatus;
+
+    @Enumerated(EnumType.STRING)
+    private SnsType snsType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "member_image_id")
     private MemberImage memberImage;
@@ -48,6 +61,22 @@ public class Member {
     private String os;
 
     //기존에 질문 기능을 위해 있던 코드
-    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "member")
     private List<ChattingMessage> messageList = new ArrayList<>();
+
+    public void deleteRefreshToken() {
+        this.refreshToken = null;
+    }
+
+    public void updateMemberImage(MemberImage memberImage) {
+        this.memberImage = memberImage;
+    }
+
+    public void updateMemberNickname(String nickName) {
+        this.nickname = nickName;
+    }
+
+    public void logout() {
+        this.fcmToken = null;
+    }
 }

@@ -4,8 +4,8 @@ spring:
       on-profile: "infra"
 
 fcm:
-  key : ${FCM_KEY}
-  url : ${FCM_URL}
+  key: ${FCM_KEY}
+  url: ${FCM_URL}
 
 cloud:
   aws:
@@ -26,3 +26,7 @@ logging:
       amazonaws:
         util:
           EC2MetadataUtils: ERROR
+
+service:
+  image-url: ${SERVICE_IMAGE_URL}
+  default-image-url: ${SERVICE_DEFAULT_IMAGE_PATH}

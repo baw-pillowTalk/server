@@ -1,5 +1,6 @@
 package com.fgama.pillowtalk.domain;
 
+import com.fgama.pillowtalk.dto.member.GetProfileImageResponseDto;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +19,7 @@ public class MemberImage {
     @Column(name = "member_image_id")
     private Long id;
 
-    private String file_name;
+    private String fileName;
 
     private String imagePath;
 
@@ -26,4 +27,12 @@ public class MemberImage {
 
     @OneToOne(mappedBy = "memberImage", fetch = FetchType.LAZY)
     private Member member;
+
+    public GetProfileImageResponseDto toGetPartnerImageResponseDto() {
+        return GetProfileImageResponseDto.builder()
+                .fileName(fileName)
+                .imagePath(imagePath)
+                .url(url)
+                .build();
+    }
 }

@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 public class FcmApi {
-
     private final CoupleService coupleService;
     private final MemberService memberService;
     private final QuestionService questionService;
@@ -28,8 +27,8 @@ public class FcmApi {
 
     @PostMapping("api/fcm/emotion")
     public EmotionResponse requestFcm(@RequestBody EmotionRequest request) {
-        Member self = memberService.findMemberByAccessToken(request.getAccessToken());
-        Couple couple = coupleService.findCoupleById(self.getCoupleId());
+        Member self = memberService.getCurrentMember();
+        Couple couple = coupleService.getCouple(self);
 
         Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
         log.info("응답 act = " + request.getAccessToken());
