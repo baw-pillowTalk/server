@@ -356,4 +356,20 @@ public class MemberService {
         return coupleRepository.findCoupleById(member.getCoupleId())
                 .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플 데이터가 존재하지 않습니다."));
     }
+
+    @Transactional(readOnly = true)
+    public GetSignalInfoResponseDto getSignalInfo() {
+        Member member = this.getCurrentMember();
+        Member partner = this.getCouple(member).getPartner();
+        return GetSignalInfoResponseDto.builder()
+                .mySignal(member.getSignal())
+                .partnerSignal(partner.getSignal())
+                .build();
+    }
+
+    @Transactional
+    public Void updateMemberSignal(UpdateMySignalRequestDto request) {
+        Member member = this.getCurrentMember();
+        return member.updateSignal(request);
+    }
 }

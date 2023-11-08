@@ -297,6 +297,23 @@ public class MemberController {
         }
     }
 
+    /**
+     * 나의, 파트너 시그널 가져오기
+     **/
+    @GetMapping("/api/v1/member/signal")
+    public ResponseEntity<GetSignalInfoResponseDto> getSignalInfo() {
+        return ResponseEntity.ok(this.memberService.getSignalInfo());
+    }
+
+    /**
+     * 내 시그널 수정 하기
+     **/
+    @PatchMapping("/api/v1/member/signal")
+    public ResponseEntity<Void> updateMySignal(
+            @Valid @RequestBody UpdateMySignalRequestDto request) {
+        return ResponseEntity.ok(this.memberService.updateMemberSignal(request));
+    }
+
 
     @Data
     static class TestRequest {

@@ -3,6 +3,7 @@ package com.fgama.pillowtalk.domain;
 import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.constant.Role;
 import com.fgama.pillowtalk.constant.SnsType;
+import com.fgama.pillowtalk.dto.member.UpdateMySignalRequestDto;
 import lombok.*;
 
 import javax.persistence.*;
@@ -32,6 +33,8 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String inviteCode;
     private String emoTitle;
+
+    private Integer signal;
 
     private Boolean chattingRoomStatus;
     private Integer nicknameChangeCount;
@@ -78,5 +81,10 @@ public class Member extends BaseEntity {
 
     public void logout() {
         this.fcmToken = null;
+    }
+
+    public Void updateSignal(UpdateMySignalRequestDto request) {
+        this.signal = request.getMySignal();
+        return null;
     }
 }
