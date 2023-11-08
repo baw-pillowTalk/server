@@ -82,6 +82,11 @@ public class CoupleService {
         return (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
     }
 
+    public Member getCouplePartner(Member member) {
+        Couple couple = this.getCouple(member);
+        return (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
+    }
+
     /**
      * - 현재 로그인한 회원의 Couple 정보 가져오기
      **/

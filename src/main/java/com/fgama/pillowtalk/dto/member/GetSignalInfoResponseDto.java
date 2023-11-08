@@ -8,6 +8,5 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetSignalInfoResponseDto {
-    private Integer mySignal;
-    private Integer partnerSignal;
+    private Integer signal;
 }

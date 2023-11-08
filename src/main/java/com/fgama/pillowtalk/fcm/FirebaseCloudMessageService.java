@@ -179,7 +179,7 @@ public class FirebaseCloudMessageService {
         return jsonObject.toJSONString();
     }
 
-    public String addChallengeFcmJsonObject(String type, Long index) {
+    public String addChallengeFcmJsonObject(String type, int index) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", type);
         jsonObject.put("index", index);

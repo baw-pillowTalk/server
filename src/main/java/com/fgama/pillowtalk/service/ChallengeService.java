@@ -37,7 +37,7 @@ public class ChallengeService {
         return challengeRepository.findAll();
     }
 
-    public CoupleChallenge getChallenge(String accessToken, Long id) throws NullPointerException {
+    public CoupleChallenge getChallenge(String accessToken, int id) throws NullPointerException {
         Member member = this.getMember();
         return challengeRepository.findByCoupleIdAndNumber(member.getCoupleId(), id);
     }
@@ -56,13 +56,13 @@ public class ChallengeService {
                 .couple(couple)
                 .creator(member.getNickname())
                 .done(false)
-                .number((long) challengeRepository.findByCoupleId(member.getCoupleId()).size())
+                .number(challengeRepository.findByCoupleId(member.getCoupleId()).size())
                 .build();
 
         return challengeRepository.save(coupleChallenge);
     }
 
-    public CoupleChallenge updateChallenge(String accessToken, Long index, String title, String body, String targetDate) throws NullPointerException {
+    public CoupleChallenge updateChallenge(String accessToken, int index, String title, String body, String targetDate) throws NullPointerException {
         Member member = this.getMember();
         Couple couple = this.coupleService.getCouple(member);
         CoupleChallenge coupleChallenge1 = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
@@ -76,7 +76,7 @@ public class ChallengeService {
         return challengeRepository.save(coupleChallenge1);
     }
 
-    public Long doneChallenge(String accessToken, Long index) throws RuntimeException {
+    public Long doneChallenge(String accessToken, int index) throws RuntimeException {
         Member member = this.getMember();
         Couple couple = this.coupleService.getCouple(member);
         CoupleChallenge coupleChallenge1 = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
@@ -89,7 +89,7 @@ public class ChallengeService {
         return challengeRepository.save(coupleChallenge1).getId();
     }
 
-    public void deleteChallenge(String accessToken, Long index) throws NullPointerException {
+    public void deleteChallenge(String accessToken, int index) throws NullPointerException {
         Member member = this.getMember();
 
         challengeRepository.deleteByCoupleIdAndNumber(member.getCoupleId(), index);
@@ -100,7 +100,7 @@ public class ChallengeService {
         Couple couple = this.coupleService.getCouple(member);
         List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleId(couple.getId());
 
-        Long index = 0L;
+        int index = 0;
         for (CoupleChallenge coupleChallenge : coupleChallenges) {
             coupleChallenge.setNumber(index);
             challengeRepository.save(coupleChallenge);

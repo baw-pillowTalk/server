@@ -22,19 +22,21 @@ public class CoupleChallenge extends BaseEntity {
     @GeneratedValue
     @Column(name = "challenge_id")
     private Long id;
-    private Long number;
+    private int number;
     private String title;
     private String body;
     private LocalDateTime targetDate;
     private Boolean done;
     private String creator;
 
+    private LocalDateTime deletedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "couple_id")
     private Couple couple;
 
     @Builder
-    public CoupleChallenge(Long id, String title, String body, LocalDateTime targetDate, Boolean done, Couple couple, String creator, Long number, LocalDateTime createAt) {
+    public CoupleChallenge(Long id, String title, String body, LocalDateTime targetDate, Boolean done, Couple couple, String creator, int number, LocalDateTime createAt) {
         this.id = id;
         this.title = title;
         this.body = body;

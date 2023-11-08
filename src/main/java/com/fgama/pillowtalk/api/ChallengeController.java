@@ -51,7 +51,7 @@ public class ChallengeController {
 
     @GetMapping("/api/v1/challenge/{id}")
     public JSendResponse getChallenge(@RequestHeader("Authorization") String authorizationHeader,
-                                      @PathVariable("id") long id) {
+                                      @PathVariable("id") int id) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             CoupleChallenge coupleChallenge = challengeService.getChallenge(accessToken, id);
@@ -294,7 +294,7 @@ public class ChallengeController {
     @Data
     static class UpdateChallengeRequest {
 
-        private Long index;
+        private int index;
         //        private String category;
         private String title;
         private String deadline;
@@ -303,13 +303,13 @@ public class ChallengeController {
 
     @Data
     static class DeleteChallengeRequest {
-        private Long index;
+        private int index;
 
     }
 
     @Data
     static class CompleteChallengeRequest {
-        private Long index;
+        private int index;
 
     }
 

@@ -352,24 +352,39 @@ public class MemberService {
     }
 
 
-    private Couple getCouple(Member member) {
-        return coupleRepository.findCoupleById(member.getCoupleId())
-                .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플 데이터가 존재하지 않습니다."));
-    }
-
+    /**
+     * - 회원 시그널 가져오기
+     **/
     @Transactional(readOnly = true)
-    public GetSignalInfoResponseDto getSignalInfo() {
+    public GetSignalInfoResponseDto getMySignal() {
         Member member = this.getCurrentMember();
-        Member partner = this.getCouple(member).getPartner();
-        return GetSignalInfoResponseDto.builder()
-                .mySignal(member.getSignal())
-                .partnerSignal(partner.getSignal())
-                .build();
+        return new GetSignalInfoResponseDto(member.getSignal());
     }
 
+    /**
+     * - 회원 파트너 시그널 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public GetSignalInfoResponseDto getPartnerSignal() {
+        Member member = this.getCurrentMember();
+        Couple couple = this.getCouple(member);
+        return (couple.getSelf() == member) ?
+                new GetSignalInfoResponseDto(couple.getPartner().getSignal())
+                : new GetSignalInfoResponseDto(couple.getSelf().getSignal());
+    }
+
+    /**
+     * - 회원 시그널 수정하기
+     **/
     @Transactional
     public Void updateMemberSignal(UpdateMySignalRequestDto request) {
         Member member = this.getCurrentMember();
         return member.updateSignal(request);
     }
+
+    private Couple getCouple(Member member) {
+        return coupleRepository.findCoupleById(member.getCoupleId())
+                .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플 데이터가 존재하지 않습니다."));
+    }
+
 }

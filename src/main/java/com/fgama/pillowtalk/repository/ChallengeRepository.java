@@ -11,9 +11,9 @@ public interface ChallengeRepository extends JpaRepository<CoupleChallenge, Long
 
     List<CoupleChallenge> findByCoupleId(Long coupleId);
 
-    CoupleChallenge findByCoupleIdAndNumber(Long coupleId, Long Number);
+    CoupleChallenge findByCoupleIdAndNumber(Long coupleId, int Number);
 
-    void deleteByCoupleIdAndNumber(Long coupleId, Long Number);
+    void deleteByCoupleIdAndNumber(Long coupleId, int Number);
 
     List<CoupleChallenge> findByCoupleId(Long coupleId, PageRequest pageRequest);
 
