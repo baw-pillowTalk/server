@@ -298,11 +298,19 @@ public class MemberController {
     }
 
     /**
-     * 나의, 파트너 시그널 가져오기
+     * 나의 시그널 가져오기
      **/
     @GetMapping("/api/v1/member/signal")
-    public ResponseEntity<GetSignalInfoResponseDto> getSignalInfo() {
-        return ResponseEntity.ok(this.memberService.getSignalInfo());
+    public ResponseEntity<GetSignalInfoResponseDto> getMySignal() {
+        return ResponseEntity.ok(this.memberService.getMySignal());
+    }
+
+    /**
+     * 파트너 시그널 가져오기
+     **/
+    @GetMapping("/api/v1/member/partner/signal")
+    public ResponseEntity<GetSignalInfoResponseDto> getPartnerSignal() {
+        return ResponseEntity.ok(this.memberService.getPartnerSignal());
     }
 
     /**

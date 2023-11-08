@@ -28,11 +28,11 @@ public class Couple extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "self_member_id")
-    private Member self;
+    private Member self; // 커플 신청자
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_member_id")
-    private Member partner;
+    private Member partner; // 커플 파트너
 
     @Enumerated(EnumType.STRING)
     private CoupleStatus coupleStatus; //available unavailable breakup

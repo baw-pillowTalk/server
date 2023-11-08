@@ -33,9 +33,8 @@ public class Member extends BaseEntity {
     @Column(unique = true)
     private String inviteCode;
     private String emoTitle;
-
+    @Column(name = "member_signal")
     private Integer signal;
-
     private Boolean chattingRoomStatus;
     private Integer nicknameChangeCount;
     private Boolean marketingConsent;

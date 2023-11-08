@@ -40,17 +40,14 @@ public class Question {
         this.questionChars = questionChars;
     }
 
-    public List<Long> getHighLight(){
+    public List<Long> getHighLight() {
         List<Long> highlight = new ArrayList<>();
-        for (QuestionChar questionChar : this.questionChars){
-            if (questionChar.getColor() == "purple"){
+        for (QuestionChar questionChar : this.questionChars) {
+            if (questionChar.getColor() == "purple") {
                 highlight.add(questionChar.getNumber());
             }
         }
         return highlight;
 
     }
-
-
-
 }

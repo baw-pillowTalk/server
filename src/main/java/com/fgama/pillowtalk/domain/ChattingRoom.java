@@ -21,8 +21,7 @@ public class ChattingRoom {
 
     private String title;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "couple_id")
+    @OneToOne(mappedBy = "chattingRoom", fetch = FetchType.LAZY)
     private Couple couple;
 
     @OneToMany(mappedBy = "chattingRoom")
