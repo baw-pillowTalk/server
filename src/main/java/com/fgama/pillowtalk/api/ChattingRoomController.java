@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class ChattingRoomApiV1 {
+public class ChattingRoomController {
     private final ChattingRoomService chattingRoomService;
     private final ChattingMessageService chattingMessageService;
     private final CoupleService coupleService;

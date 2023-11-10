@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class CoupleQuestionApi {
+public class CoupleQuestionController {
     private final CoupleService coupleService;
     private final MemberService memberService;
     private final ChattingRoomService chattingRoomService;

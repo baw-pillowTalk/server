@@ -52,7 +52,7 @@ public class JwtService {
     public OauthLoginResponseDto createServiceToken(Member member) {
         return OauthLoginResponseDto.builder()
                 .tokenType(this.jwtProperties.getBearer())
-                .accessToken(this.createAccessToken(String.valueOf(member.getId())))
+                .accessToken(this.jwtProperties.getBearer() + " " + this.createAccessToken(String.valueOf(member.getId())))
                 .refreshToken(this.createRefreshToken())
                 .expiredTime(LocalDateTime.now().plusSeconds(this.jwtProperties.getAccessExpiration()))
                 .build();

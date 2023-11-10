@@ -74,6 +74,7 @@ public class AuthService {
     private Member getMemberFromOauthLoginRequest(OauthLoginRequestDto request) {
         Member member;
         try {
+            // 자식 tx 에서 예외 발생 시 rollback = true 로 설정해서 해당 메소드에서 예외 발생
             member = this.memberService.findMemberByOauthIdAndSnsType(request.getOauthId(), request.getSnsType());
         } catch (MemberNotFoundException exception) {
             /* oauthId 해당하는 회원 존재 x */
@@ -84,7 +85,9 @@ public class AuthService {
 
     private OauthLoginResponseDto processOauthLogin(Member member) {
         SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(member));
-        return this.jwtService.createServiceToken(member);
+        OauthLoginResponseDto serviceToken = this.jwtService.createServiceToken(member);
+        member.setRefreshToken(serviceToken.getRefreshToken());
+        return serviceToken;
     }
 
     private Member getMemberByToken(String accessToken) {

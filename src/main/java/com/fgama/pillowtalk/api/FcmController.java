@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class FcmApi {
+public class FcmController {
     private final CoupleService coupleService;
     private final MemberService memberService;
     private final QuestionService questionService;

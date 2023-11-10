@@ -1,21 +1,30 @@
 package com.fgama.pillowtalk.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fgama.pillowtalk.auth.SigninWithAppleJWT;
+import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.dto.MemberDto;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
 import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
 import com.fgama.pillowtalk.service.AuthService;
+import com.fgama.pillowtalk.service.MemberService;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.nimbusds.jose.JOSEException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import static com.fgama.pillowtalk.auth.SigninWithAppleJWT.getAppleUserInfo;
+import static com.fgama.pillowtalk.constant.SnsType.APPLE;
 
 /**
  * 1. 로그인 (re-login)
@@ -29,9 +38,10 @@ import javax.validation.Valid;
 @RestController
 public class AuthController {
     private final AuthService authService;
+    private final MemberService memberService;
 
     /**
-     * kakao,google,naver 소셜 로그인 api
+     * kakao,google,naver,apple ios 소셜 로그인 api
      * - 서비스 access,refresh token 발급
      **/
     @PostMapping("/api/v1/login")
@@ -69,6 +79,49 @@ public class AuthController {
     public ResponseEntity<Void> withDraw() {
         this.authService.withDraw();
         return ResponseEntity.ok().build();
+    }
+
+    /***
+     * 안드로이드용 애플로그인 시 callback함수로 애플에서 "login/apple" url로 보내줌
+     * code로 회원데이터 얻을수있음
+     * 콜백으로온 state는 회원가입시 클라이언트에서 보내는 state코드와 비교하여 인증하는 용도로 사용
+     */
+    @RequestMapping(value = "/api/v1/login/apple")
+    public void oauth_apple_v1(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "state", required = false) String state
+    ) throws Exception { // android에서 애플가입 웹뷰
+        try {
+            //clientSecret만들기
+            String jwt = SigninWithAppleJWT.generateSignedJWT(
+                    "K5RZZ64DS3",
+                    "clonect.com.feeltalk"
+            );
+            //정보가져오기
+            String authorizationCode = SigninWithAppleJWT.exchangeAuthorizationCode(jwt, code);
+
+            //정보추출
+            ObjectMapper mapper = new ObjectMapper();
+            MemberDto.AppleTokenResponse response = mapper.readValue(authorizationCode, MemberDto.AppleTokenResponse.class);
+
+            String idToken = response.getIdToken();
+            //idToken에서 유저데이터 뽑아오기
+            JsonObject appleUserInfo = getAppleUserInfo(idToken);
+            JsonElement appleAlg = appleUserInfo.get("sub"); // 유저 oauthId
+            String oauthId = appleAlg.getAsString();
+            Member member = memberService.findMemberByOauthIdAndSnsType(oauthId, APPLE);
+
+            if (member == null) {
+                // 회원 가입
+            }
+
+            // jwt 발급 (이미 회원가입 한 경우)
+
+
+        } catch (JOSEException | JsonProcessingException e) {
+            log.info("애플 회원가입/재로그인 실패" + e.getMessage());
+            throw e;
+        }
     }
 
 

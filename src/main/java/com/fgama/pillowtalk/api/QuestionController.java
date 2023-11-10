@@ -16,16 +16,14 @@ import java.io.*;
 
 @RestController
 @RequiredArgsConstructor
-public class QuestionApi {
+public class QuestionController {
     private final QuestionService questionService;
     private final MemberService memberService;
     private final ChattingRoomService chattingRoomService;
 
-    /***
-     * 질문 추가
-     * 기획에서 정해준 질문 파일로 만들어서 디비에 저장하는 코드
-     * @return
-     */
+    /**
+     * 서비스에서 지정한 질문 저장(등록)
+     **/
     @PostMapping("/api/questions")
     public String AddQuestions() {
         try {
@@ -53,6 +51,9 @@ public class QuestionApi {
         return "기존 질문 추가 성공";
     }
 
+    /**
+     * 커플 상세 질문 등록
+     **/
     @PostMapping("/api/question/detail")
     public QuestionResponse getHeader(@RequestBody QuestionRequest request) {
         Question question = questionService.findQuestionByTitle(request.getTitle());

@@ -54,7 +54,6 @@ public class MemberService {
     /**
      * - oauthId, snsType 에 해당하는 사용자 정보 가져오기
      **/
-    @Transactional(readOnly = true)
     public Member findMemberByOauthIdAndSnsType(String oauthId, SnsType snsType) {
         return memberRepository.findMemberByOauthIdAndSnsType(oauthId, snsType)
                 .orElseThrow(() -> new MemberNotFoundException("일치하는 회원이 존재하지 않습니다."));
