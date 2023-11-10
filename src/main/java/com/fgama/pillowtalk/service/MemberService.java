@@ -7,6 +7,7 @@ import com.fgama.pillowtalk.domain.*;
 import com.fgama.pillowtalk.dto.member.*;
 import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
 import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
+import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
 import com.fgama.pillowtalk.repository.MemberRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.fgama.pillowtalk.constant.MemberStatus.SOLO;
 
@@ -28,19 +30,14 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final ChattingMessageRepository chattingMessageRepository;
     private final CoupleRepository coupleRepository;
+
     private final FileUploadService fileUploadService;
+    private final FirebaseCloudMessageService firebaseCloudMessageService;
 
     @Value("${service.image-url}")
     private String serviceImageUrl;
     @Value("${service.default-image-url}")
     private String serviceDefaultImageUrl;
-
-    public Long join(Member member) {
-//        validateDuplicateEamilAndSnsType(member);
-//        Member member1 = memberCustomRepository.save(member);
-        Member member1 = memberRepository.save(member);
-        return member1.getId();
-    }
 
     /**
      * - 해당 code 을 가지는 Member 정보 가져오기
@@ -60,12 +57,18 @@ public class MemberService {
 
     }
 
+    /**
+     * - 채팅 방 상태 변경
+     **/
     @Transactional
-    public void changeChatRoomStatus(Boolean isInChat) throws NullPointerException {
+    public void changeChatRoomStatus(ChangeChattingRoomStateRequestDto request) throws NullPointerException {
         Member member = this.getCurrentMember();
-        member.setChattingRoomStatus(isInChat);
-        if (isInChat) {
-            Couple couple = this.coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
+        Couple couple = this.getCouple(member);
+        member.setChattingRoomStatus(request);
+
+        Member memberPartner = null;
+
+        if (request.isInChat()) {
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
             List<ChattingMessage> chattingMessages = couple.getChattingRoom().getMessageList();
 
@@ -74,7 +77,13 @@ public class MemberService {
                     message.setIsRead(true);
                 }
             }
+            memberPartner = partner;
         }
+        String fcmDetail = this.firebaseCloudMessageService.getFcmChattingStatus(
+                "chatRoomStatusChange",
+                request.isInChat()
+        );
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, Objects.requireNonNull(memberPartner).getFcmToken());
     }
 
     public Member findMemberByRefreshToken(String refreshToken) throws NullPointerException {
@@ -251,7 +260,11 @@ public class MemberService {
     @Transactional(readOnly = true)
     public GetProfileImageResponseDto getMyProfileImage() {
         Member member = this.getCurrentMember();
-        return member.getMemberImage().toGetPartnerImageResponseDto();
+        MemberImage memberImage = member.getMemberImage();
+        if (memberImage == null) {
+            return null;
+        }
+        return memberImage.toGetPartnerImageResponseDto();
     }
 
     @Transactional

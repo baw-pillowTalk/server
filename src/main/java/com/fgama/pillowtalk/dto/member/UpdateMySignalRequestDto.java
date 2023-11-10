@@ -2,6 +2,8 @@ package com.fgama.pillowtalk.dto.member;
 
 import lombok.*;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @Getter
@@ -11,5 +13,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public class UpdateMySignalRequestDto {
     @NotNull
+    @Min(0)
+    @Max(100)
     private Integer mySignal;
 }

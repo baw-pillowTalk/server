@@ -3,6 +3,7 @@ package com.fgama.pillowtalk.domain;
 import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.constant.Role;
 import com.fgama.pillowtalk.constant.SnsType;
+import com.fgama.pillowtalk.dto.member.ChangeChattingRoomStateRequestDto;
 import com.fgama.pillowtalk.dto.member.UpdateMySignalRequestDto;
 import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import lombok.*;
@@ -94,11 +95,17 @@ public class Member extends BaseEntity {
         this.refreshToken = refreshToken;
     }
 
-    public Long completeMemberSignup(CompleteMemberSignupRequestDto request) {
+    public Long completeMemberSignup(String inviteCode, CompleteMemberSignupRequestDto request) {
         this.nickname = request.getNickname();
         this.marketingConsent = request.getMarketingConsent();
         this.fcmToken = request.getFcmToken();
         this.memberStatus = SOLO;
+        this.inviteCode = inviteCode;
+        this.signal = 50;
         return this.id;
+    }
+
+    public void setChattingRoomStatus(ChangeChattingRoomStateRequestDto request) {
+        this.chattingRoomStatus = request.isInChat();
     }
 }

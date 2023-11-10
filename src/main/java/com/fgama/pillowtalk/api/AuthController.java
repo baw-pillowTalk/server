@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fgama.pillowtalk.auth.SigninWithAppleJWT;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.MemberDto;
+import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
 import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
 import com.fgama.pillowtalk.service.AuthService;
+import com.fgama.pillowtalk.service.JwtService;
 import com.fgama.pillowtalk.service.MemberService;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +42,8 @@ import static com.fgama.pillowtalk.constant.SnsType.APPLE;
 public class AuthController {
     private final AuthService authService;
     private final MemberService memberService;
+    private final JwtService jwtService;
+
 
     /**
      * kakao,google,naver,apple ios 소셜 로그인 api
@@ -87,7 +92,7 @@ public class AuthController {
      * 콜백으로온 state는 회원가입시 클라이언트에서 보내는 state코드와 비교하여 인증하는 용도로 사용
      */
     @RequestMapping(value = "/api/v1/login/apple")
-    public void oauth_apple_v1(
+    public OauthLoginResponseDto oauth_apple_v1(
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "state", required = false) String state
     ) throws Exception { // android에서 애플가입 웹뷰
@@ -105,23 +110,29 @@ public class AuthController {
             MemberDto.AppleTokenResponse response = mapper.readValue(authorizationCode, MemberDto.AppleTokenResponse.class);
 
             String idToken = response.getIdToken();
-            //idToken에서 유저데이터 뽑아오기
             JsonObject appleUserInfo = getAppleUserInfo(idToken);
             JsonElement appleAlg = appleUserInfo.get("sub"); // 유저 oauthId
             String oauthId = appleAlg.getAsString();
             Member member = memberService.findMemberByOauthIdAndSnsType(oauthId, APPLE);
-
             if (member == null) {
                 // 회원 가입
+                Member savedMember = authService.saveMemberFromAppleAndroid(oauthId);
+                return getOauthLoginResponseDto(savedMember);
             }
-
             // jwt 발급 (이미 회원가입 한 경우)
-
+            return this.jwtService.createServiceToken(member);
 
         } catch (JOSEException | JsonProcessingException e) {
             log.info("애플 회원가입/재로그인 실패" + e.getMessage());
             throw e;
         }
+    }
+
+    private OauthLoginResponseDto getOauthLoginResponseDto(Member savedMember) {
+        SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(savedMember)); // 인증 객체 생성
+        OauthLoginResponseDto serviceToken = this.jwtService.createServiceToken(savedMember); // 서비스 토큰 생성
+        savedMember.setRefreshToken(serviceToken.getRefreshToken());
+        return serviceToken;
     }
 
 
