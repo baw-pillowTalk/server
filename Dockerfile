@@ -1,10 +1,4 @@
-FROM jenkins/jenkins:jdk11
-
-USER root
-
-COPY docker_install.sh /docker_install.sh
-RUN chmod +x /docker_install.sh
-RUN /docker_install.sh
-
-RUN usermod -aG docker jenkins
-USER jenkins
+FROM openjdk:11
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-jar","-Dspring.profiles.active=prod","-Duser.timezone=Asia/Seoul", "/app.jar"]
