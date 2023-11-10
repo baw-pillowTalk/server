@@ -10,16 +10,9 @@ public class MemberDto {
     @AllArgsConstructor
     @NoArgsConstructor
     static public class CreateMemberRequestV1 {
-        private String idToken;
-        private String authCode;
-
-        private String refreshToken;
-        private String state;
-        private String authorizationCode;
-
+        private String state; // android + apple
         private Boolean marketingConsent;
         private String nickname;
-        private String snsType;
         private String fcmToken;
     }
 

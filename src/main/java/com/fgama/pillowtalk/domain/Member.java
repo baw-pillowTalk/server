@@ -4,11 +4,14 @@ import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.constant.Role;
 import com.fgama.pillowtalk.constant.SnsType;
 import com.fgama.pillowtalk.dto.member.UpdateMySignalRequestDto;
+import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.fgama.pillowtalk.constant.MemberStatus.SOLO;
 
 @Entity
 @Builder
@@ -38,6 +41,7 @@ public class Member extends BaseEntity {
     private Boolean chattingRoomStatus;
     private Integer nicknameChangeCount;
     private Boolean marketingConsent;
+
     //android apple sns 로그인시 사용
     private String state;
 
@@ -48,7 +52,6 @@ public class Member extends BaseEntity {
     private SnsType snsType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Role role;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -85,5 +88,17 @@ public class Member extends BaseEntity {
     public Void updateSignal(UpdateMySignalRequestDto request) {
         this.signal = request.getMySignal();
         return null;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public Long completeMemberSignup(CompleteMemberSignupRequestDto request) {
+        this.nickname = request.getNickname();
+        this.marketingConsent = request.getMarketingConsent();
+        this.fcmToken = request.getFcmToken();
+        this.memberStatus = SOLO;
+        return this.id;
     }
 }

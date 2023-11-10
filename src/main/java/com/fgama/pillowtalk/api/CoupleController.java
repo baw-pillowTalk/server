@@ -16,7 +16,7 @@ import javax.validation.Valid;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class CoupleV1Controller {
+public class CoupleController {
     private final CoupleService coupleService;
     private final CoupleQuestionService coupleQuestionService;
 
@@ -30,9 +30,4 @@ public class CoupleV1Controller {
     ) {
         return new ResponseEntity<>(this.coupleService.createCouple(request), HttpStatus.CREATED);
     }
-
-//    @PostMapping("/api/v1/couple/breakup")
-//    public ResponseEntity<Void> breakUpCouple() {
-//        return new ResponseEntity<>(this.coupleService.breakupCouple(), HttpStatus.OK);
-//    }
 }

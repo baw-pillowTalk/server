@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class ChattingMessageApiV1 {
+public class ChattingMessageController {
     private final ChattingRoomService chattingRoomService;
     private final CoupleQuestionService coupleQuestionService;
     private final ChallengeService challengeService;
