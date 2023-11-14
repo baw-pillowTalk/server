@@ -38,8 +38,8 @@ public class Couple extends BaseEntity {
 
 
     /* 채팅 룸 */
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "chatting_room_id")
+
+    @OneToOne(mappedBy = "couple", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private ChattingRoom chattingRoom;
 
     /* 커플 질문 */

@@ -45,17 +45,18 @@ public class CoupleService {
             throw new CoupleAlreadyExistException("커플이 이미 존재합니다.");
         }
         /* couple 생성 */
+        ChattingRoom chattingRoom = this.chattingRoomRepository.save(ChattingRoom.builder()
+                .title("커플 채팅방")
+                .build());
+
         Couple couple = Couple.builder()
                 .self(self)
+                .chattingRoom(chattingRoom)
                 .partner(partner)
                 .coupleStatus(AVAILABLE)
                 .build();
 
         /* chatting room 생성 */
-        this.chattingRoomRepository.save(ChattingRoom.builder()
-                .title("커플 채팅방")
-                .couple(couple)
-                .build());
 
         self.setCoupleId(couple.getId());
         self.setMemberStatus(COUPLE);

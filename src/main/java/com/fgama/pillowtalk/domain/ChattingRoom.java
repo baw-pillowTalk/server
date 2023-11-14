@@ -20,7 +20,8 @@ public class ChattingRoom {
 
     private String title;
 
-    @OneToOne(mappedBy = "chattingRoom", fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "couple_id")
     private Couple couple;
 
     @OneToMany(mappedBy = "chattingRoom")
