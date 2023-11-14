@@ -9,7 +9,6 @@ import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.fgama.pillowtalk.constant.MemberStatus.SOLO;
@@ -67,7 +66,7 @@ public class Member extends BaseEntity {
 
     //기존에 질문 기능을 위해 있던 코드
     @OneToMany(mappedBy = "member")
-    private List<ChattingMessage> messageList = new ArrayList<>();
+    private List<ChattingMessage> messageList;
 
     public void deleteRefreshToken() {
         this.refreshToken = null;

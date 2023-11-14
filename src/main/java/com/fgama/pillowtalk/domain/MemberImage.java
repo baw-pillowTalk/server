@@ -25,7 +25,6 @@ public class MemberImage {
 
     private String url;
 
-
     public GetProfileImageResponseDto toGetPartnerImageResponseDto() {
         return GetProfileImageResponseDto.builder()
                 .fileName(fileName)

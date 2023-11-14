@@ -7,7 +7,6 @@ import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -45,11 +44,11 @@ public class Couple extends BaseEntity {
 
     /* 커플 질문 */
     @OneToMany(mappedBy = "couple", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CoupleQuestion> coupleQuestions = new ArrayList<>();
+    private List<CoupleQuestion> coupleQuestions;
 
     /* 커플 챌린지 */
     @OneToMany(mappedBy = "couple", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CoupleChallenge> coupleChallenges = new ArrayList<>();
+    private List<CoupleChallenge> coupleChallenges;
 
     private String coupleCode;
 }
