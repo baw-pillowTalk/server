@@ -4,7 +4,7 @@ import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
-import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
+import com.fgama.pillowtalk.dto.auth.OauthLoginResponse;
 import com.fgama.pillowtalk.exception.auth.UnauthorizedMemberException;
 import com.fgama.pillowtalk.exception.global.MemberNeedExtraSignupException;
 import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
@@ -37,7 +37,7 @@ public class AuthService {
      * - 로그인
      **/
     @Transactional
-    public OauthLoginResponseDto login(OauthLoginRequestDto request) {
+    public OauthLoginResponse login(OauthLoginRequestDto request) {
         return this.processOauthLogin(this.getMemberFromOauthLoginRequest(request));
     }
 
@@ -60,7 +60,7 @@ public class AuthService {
      * - access token 재발급
      **/
     @Transactional
-    public OauthLoginResponseDto reissue(HttpServletRequest httpServletRequest) {
+    public OauthLoginResponse reissue(HttpServletRequest httpServletRequest) {
         Member member = this.checkValidationForReissue(httpServletRequest);
         return this.processOauthLogin(member);
     }
@@ -102,9 +102,9 @@ public class AuthService {
         return member;
     }
 
-    private OauthLoginResponseDto processOauthLogin(Member member) {
+    private OauthLoginResponse processOauthLogin(Member member) {
         SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(member));
-        OauthLoginResponseDto serviceToken = this.jwtService.createServiceToken(member);
+        OauthLoginResponse serviceToken = this.jwtService.createServiceToken(member);
         member.setRefreshToken(serviceToken.getRefreshToken());
         return serviceToken;
     }

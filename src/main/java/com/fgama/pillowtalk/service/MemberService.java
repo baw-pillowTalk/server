@@ -167,7 +167,7 @@ public class MemberService {
 
     public void updatePassword(String accessToken, String password) throws RuntimeException {
         Member member = this.getCurrentMember();
-        if (member.getMemberConfig().getLock()) {
+        if (member.getMemberConfig().getLocked()) {
             member.getMemberConfig().setPassword(password);
         } else {
             throw new RuntimeException("비번 초기 값이 없습니다.");
@@ -178,8 +178,8 @@ public class MemberService {
 
     public void unlockPassword(String accessToken) throws RuntimeException {
         Member member = this.getCurrentMember();
-        if (member.getMemberConfig().getLock()) {
-            member.getMemberConfig().setLock(false);
+        if (member.getMemberConfig().getLocked()) {
+            member.getMemberConfig().setLocked(false);
             member.getMemberConfig().setPassword(null);
             member.getMemberConfig().setAnswer(null);
             member.getMemberConfig().setQuestionType(null);
@@ -192,7 +192,7 @@ public class MemberService {
     public MemberConfig getPasswordData(String accessToken) throws RuntimeException {
 
         Member member = this.getCurrentMember();
-        if (member.getMemberConfig().getLock()) {
+        if (member.getMemberConfig().getLocked()) {
             return member.getMemberConfig();
         } else {
             throw new RuntimeException("잠금상태가 아닙니다.");

@@ -1,7 +1,7 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.domain.Member;
-import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
+import com.fgama.pillowtalk.dto.auth.OauthLoginResponse;
 import com.fgama.pillowtalk.exception.auth.UnauthorizedMemberException;
 import com.fgama.pillowtalk.properties.JwtProperties;
 import io.jsonwebtoken.*;
@@ -49,8 +49,8 @@ public class JwtService {
     /**
      * 3. Service Token 생성
      **/
-    public OauthLoginResponseDto createServiceToken(Member member) {
-        return OauthLoginResponseDto.builder()
+    public OauthLoginResponse createServiceToken(Member member) {
+        return OauthLoginResponse.builder()
                 .tokenType(this.jwtProperties.getBearer())
                 .accessToken(this.jwtProperties.getBearer() + " " + this.createAccessToken(String.valueOf(member.getId())))
                 .refreshToken(this.createRefreshToken())

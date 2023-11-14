@@ -44,6 +44,7 @@ public class Member extends BaseEntity {
     private Boolean marketingConsent;
 
     //android apple sns 로그인시 사용
+    @Column(name = "member_state")
     private String state;
 
     @Enumerated(EnumType.STRING)
@@ -56,11 +57,9 @@ public class Member extends BaseEntity {
     private Role role;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "member_image_id")
     private MemberImage memberImage;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "member_config_id")
     private MemberConfig memberConfig;
 
     //기존에 쓰다가 안쓰는중 쓸 수도 있음
@@ -95,13 +94,16 @@ public class Member extends BaseEntity {
         this.refreshToken = refreshToken;
     }
 
-    public Long completeMemberSignup(String inviteCode, CompleteMemberSignupRequestDto request) {
+    public Long completeMemberSignup(String inviteCode,
+                                     CompleteMemberSignupRequestDto request,
+                                     MemberImage memberImage) {
         this.nickname = request.getNickname();
         this.marketingConsent = request.getMarketingConsent();
         this.fcmToken = request.getFcmToken();
         this.memberStatus = SOLO;
         this.inviteCode = inviteCode;
         this.signal = 50;
+        this.memberImage = memberImage;
         return this.id;
     }
 

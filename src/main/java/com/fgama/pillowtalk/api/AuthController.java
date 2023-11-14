@@ -8,7 +8,7 @@ import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.MemberDto;
 import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
-import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
+import com.fgama.pillowtalk.dto.auth.OauthLoginResponse;
 import com.fgama.pillowtalk.service.AuthService;
 import com.fgama.pillowtalk.service.JwtService;
 import com.fgama.pillowtalk.service.MemberService;
@@ -50,7 +50,7 @@ public class AuthController {
      * - 서비스 access,refresh token 발급
      **/
     @PostMapping("/api/v1/login")
-    public ResponseEntity<OauthLoginResponseDto> login(
+    public ResponseEntity<OauthLoginResponse> login(
             @RequestBody @Valid OauthLoginRequestDto request) {
         return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
     }
@@ -71,7 +71,7 @@ public class AuthController {
      * - jwtAuthenticationFilter 예외 API
      */
     @PostMapping("/api/v1/reissue")
-    public ResponseEntity<OauthLoginResponseDto> renewAccessToken(
+    public ResponseEntity<OauthLoginResponse> renewAccessToken(
             HttpServletRequest httpServletRequest
     ) {
         return ResponseEntity.ok(this.authService.reissue(httpServletRequest));
@@ -92,7 +92,7 @@ public class AuthController {
      * 콜백으로온 state는 회원가입시 클라이언트에서 보내는 state코드와 비교하여 인증하는 용도로 사용
      */
     @RequestMapping(value = "/api/v1/login/apple")
-    public OauthLoginResponseDto oauth_apple_v1(
+    public OauthLoginResponse oauth_apple_v1(
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "state", required = false) String state
     ) throws Exception { // android에서 애플가입 웹뷰
@@ -128,9 +128,9 @@ public class AuthController {
         }
     }
 
-    private OauthLoginResponseDto getOauthLoginResponseDto(Member savedMember) {
+    private OauthLoginResponse getOauthLoginResponseDto(Member savedMember) {
         SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(savedMember)); // 인증 객체 생성
-        OauthLoginResponseDto serviceToken = this.jwtService.createServiceToken(savedMember); // 서비스 토큰 생성
+        OauthLoginResponse serviceToken = this.jwtService.createServiceToken(savedMember); // 서비스 토큰 생성
         savedMember.setRefreshToken(serviceToken.getRefreshToken());
         return serviceToken;
     }

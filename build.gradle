@@ -47,7 +47,7 @@ dependencies {
 
 
     // infra
-    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
     implementation group: 'com.google.firebase', name: 'firebase-admin', version: '6.4.0'
 

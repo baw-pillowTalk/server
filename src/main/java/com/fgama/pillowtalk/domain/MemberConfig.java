@@ -4,7 +4,6 @@ import com.fgama.pillowtalk.dto.member.SetMemberPasswordRequestDto;
 import com.fgama.pillowtalk.dto.member.UpdateMemberPasswordRequestDto;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
 
@@ -16,8 +15,7 @@ public class MemberConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_config_id")
     private Long id;
-    @ColumnDefault("false")
-    private Boolean lock;
+    private Boolean locked;
     @Column(length = 2000)
     private String password;
     private Boolean push;
@@ -26,6 +24,7 @@ public class MemberConfig {
     private String language;
     private Boolean advertisement;
     private String version;
+
     @OneToOne(mappedBy = "memberConfig", fetch = FetchType.LAZY)
     private Member member;
 

@@ -21,8 +21,8 @@ spring:
       max-request-size: 50MB
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3306}/${DATABASE_NAME}?&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT:3306}/${DATABASE_NAME}?&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
 

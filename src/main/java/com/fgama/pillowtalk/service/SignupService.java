@@ -1,10 +1,12 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.domain.MemberImage;
 import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import com.fgama.pillowtalk.exception.signup.MemberStateNotEqualException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,9 @@ import java.util.Random;
 public class SignupService {
     private final MemberService memberService;
 
+    @Value("${service.default-image-url}")
+    private String defaultImageUrl;
+
     @Transactional
     public Long signup(CompleteMemberSignupRequestDto request) {
         Member member = this.memberService.getCurrentMember();
@@ -24,7 +29,12 @@ public class SignupService {
             this.checkMemberState(member, request);
         }
         String inviteCode = this.makeInviteCode();
-        return member.completeMemberSignup(inviteCode, request);
+        MemberImage basicImage = MemberImage.builder()
+                .imagePath(defaultImageUrl + ".png")
+                .fileName("default")
+                .url(defaultImageUrl + ".png")
+                .build();
+        return member.completeMemberSignup(inviteCode, request, basicImage);
     }
 
     private void checkMemberState(Member member, CompleteMemberSignupRequestDto request) {
