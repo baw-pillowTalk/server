@@ -38,7 +38,6 @@ public class Couple extends BaseEntity {
 
 
     /* 채팅 룸 */
-
     @OneToOne(mappedBy = "couple", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private ChattingRoom chattingRoom;
 
