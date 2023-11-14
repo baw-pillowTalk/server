@@ -16,7 +16,7 @@ public class GetMemberConfigInfoResponseDto {
     public static GetMemberConfigInfoResponseDto from(MemberConfig memberConfig) {
         return GetMemberConfigInfoResponseDto.builder()
                 .language(memberConfig.getLanguage())
-                .lock(memberConfig.getLock())
+                .lock(memberConfig.getLocked())
                 .build();
     }
 }

@@ -33,6 +33,5 @@ public class ChattingMessage extends BaseEntity {
     private Long challengeIndex;
     private String emoji;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
     private Member member;
 }

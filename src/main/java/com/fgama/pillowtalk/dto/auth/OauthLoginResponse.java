@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OauthLoginResponseDto {
+public class OauthLoginResponse {
     private String tokenType;
     private String accessToken;
     private String refreshToken;

@@ -30,6 +30,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
     }
 
+    @ExceptionHandler(MemberNeedExtraSignupException.class)
+    public ResponseEntity<?> memberNeedExtraSignupExceptionHandler(
+            MemberNeedExtraSignupException exception
+    ) {
+        log.warn("MemberNeedExtraSignupException Occurs");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> exceptionHandler(
             Exception exception

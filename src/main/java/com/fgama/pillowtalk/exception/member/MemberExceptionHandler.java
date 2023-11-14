@@ -2,6 +2,7 @@ package com.fgama.pillowtalk.exception.member;
 
 import com.fgama.pillowtalk.api.MemberController;
 import com.fgama.pillowtalk.exception.ErrorMessage;
+import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,14 @@ public class MemberExceptionHandler {
     @ExceptionHandler(MemberNotFoundException.class)
     public ResponseEntity<ErrorMessage> memberNotFoundExceptionHandler(
             MemberNotFoundException exception
+    ) {
+        return ResponseEntity.badRequest()
+                .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+    }
+
+    @ExceptionHandler(CoupleNotFoundException.class)
+    public ResponseEntity<ErrorMessage> coupleNotFoundExceptionHandler(
+            CoupleNotFoundException exception
     ) {
         return ResponseEntity.badRequest()
                 .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));

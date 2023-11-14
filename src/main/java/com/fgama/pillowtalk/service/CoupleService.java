@@ -79,6 +79,9 @@ public class CoupleService {
     public Member getCouplePartner() {
         Member member = this.memberService.getCurrentMember();
         Couple couple = this.getCouple(member);
+        if (couple == null) {
+            return null;
+        }
         return (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
     }
 
@@ -91,14 +94,20 @@ public class CoupleService {
      * - 현재 로그인한 회원의 Couple 정보 가져오기
      **/
     public Couple getCouple(Member member) {
+        if (!member.getMemberStatus().equals(COUPLE)) {
+            return null;
+        }
         return this.coupleRepository.findCoupleById(member.getCoupleId())
-                .orElseThrow(() -> new CoupleNotFoundException("일치하는 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플이 존재하지 않습니다."));
     }
 
     /**
      * - 커플 데이터 삭제
      **/
     public void deleteCouple(Couple couple) {
+        if (couple == null) {
+            return;
+        }
         this.coupleRepository.delete(couple);
     }
 

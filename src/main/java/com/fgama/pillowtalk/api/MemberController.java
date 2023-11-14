@@ -2,7 +2,6 @@ package com.fgama.pillowtalk.api;
 
 import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.constant.MemberStatus;
-import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.domain.MemberConfig;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.dto.member.*;
@@ -62,19 +61,11 @@ public class MemberController {
      * 변경 후 파트너 에게 공지
      */
     @PatchMapping("/api/v1/member/chatting-room-status")
-    public JSendResponse changeChatRoomStatus(
-            @RequestBody ChangeChattingRoomStateRequestDto request
+    public ResponseEntity<Void> changeChatRoomStatus(
+            @Valid @RequestBody ChangeChattingRoomStateRequestDto request
     ) {
-        try {
-            this.memberService.changeChatRoomStatus(request.isInChat());
-            Member partner = this.coupleService.getCouplePartner();
-            String fcmDetail = this.firebaseCloudMessageService.getFcmChattingStatus(
-                    "chatRoomStatusChange", request.isInChat());
-            this.firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
-        } catch (Exception e) {
-            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
-        }
+        this.memberService.changeChatRoomStatus(request);
+        return ResponseEntity.ok().build();
     }
 
     /***
@@ -316,7 +307,7 @@ public class MemberController {
     /**
      * 내 시그널 수정 하기
      **/
-    @PatchMapping("/api/v1/member/signal")
+    @PostMapping("/api/v1/member/signal")
     public ResponseEntity<Void> updateMySignal(
             @Valid @RequestBody UpdateMySignalRequestDto request) {
         return ResponseEntity.ok(this.memberService.updateMemberSignal(request));

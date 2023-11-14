@@ -3,6 +3,7 @@ package com.fgama.pillowtalk.domain;
 import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.constant.Role;
 import com.fgama.pillowtalk.constant.SnsType;
+import com.fgama.pillowtalk.dto.member.ChangeChattingRoomStateRequestDto;
 import com.fgama.pillowtalk.dto.member.UpdateMySignalRequestDto;
 import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import lombok.*;
@@ -43,6 +44,7 @@ public class Member extends BaseEntity {
     private Boolean marketingConsent;
 
     //android apple sns 로그인시 사용
+    @Column(name = "member_state")
     private String state;
 
     @Enumerated(EnumType.STRING)
@@ -55,11 +57,9 @@ public class Member extends BaseEntity {
     private Role role;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "member_image_id")
     private MemberImage memberImage;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "member_config_id")
     private MemberConfig memberConfig;
 
     //기존에 쓰다가 안쓰는중 쓸 수도 있음
@@ -94,11 +94,20 @@ public class Member extends BaseEntity {
         this.refreshToken = refreshToken;
     }
 
-    public Long completeMemberSignup(CompleteMemberSignupRequestDto request) {
+    public Long completeMemberSignup(String inviteCode,
+                                     CompleteMemberSignupRequestDto request,
+                                     MemberImage memberImage) {
         this.nickname = request.getNickname();
         this.marketingConsent = request.getMarketingConsent();
         this.fcmToken = request.getFcmToken();
         this.memberStatus = SOLO;
+        this.inviteCode = inviteCode;
+        this.signal = 50;
+        this.memberImage = memberImage;
         return this.id;
+    }
+
+    public void setChattingRoomStatus(ChangeChattingRoomStateRequestDto request) {
+        this.chattingRoomStatus = request.isInChat();
     }
 }

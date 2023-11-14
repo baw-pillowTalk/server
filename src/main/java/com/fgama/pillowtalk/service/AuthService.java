@@ -4,8 +4,9 @@ import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
-import com.fgama.pillowtalk.dto.auth.OauthLoginResponseDto;
+import com.fgama.pillowtalk.dto.auth.OauthLoginResponse;
 import com.fgama.pillowtalk.exception.auth.UnauthorizedMemberException;
+import com.fgama.pillowtalk.exception.global.MemberNeedExtraSignupException;
 import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
 import com.fgama.pillowtalk.repository.MemberRepository;
 import com.fgama.pillowtalk.util.SecurityUtil;
@@ -18,6 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.Optional;
+
+import static com.fgama.pillowtalk.constant.MemberStatus.NEWBIE;
+import static com.fgama.pillowtalk.constant.Role.ROLE_USER;
+import static com.fgama.pillowtalk.constant.SnsType.APPLE;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,7 +37,7 @@ public class AuthService {
      * - 로그인
      **/
     @Transactional
-    public OauthLoginResponseDto login(OauthLoginRequestDto request) {
+    public OauthLoginResponse login(OauthLoginRequestDto request) {
         return this.processOauthLogin(this.getMemberFromOauthLoginRequest(request));
     }
 
@@ -42,6 +47,7 @@ public class AuthService {
      **/
     @Transactional
     public Long logout() {
+        this.checkMemberStatus();
         Member member = this.memberService.getCurrentMember();
         // fcm null 설정
         member.logout();
@@ -54,7 +60,7 @@ public class AuthService {
      * - access token 재발급
      **/
     @Transactional
-    public OauthLoginResponseDto reissue(HttpServletRequest httpServletRequest) {
+    public OauthLoginResponse reissue(HttpServletRequest httpServletRequest) {
         Member member = this.checkValidationForReissue(httpServletRequest);
         return this.processOauthLogin(member);
     }
@@ -64,17 +70,30 @@ public class AuthService {
      **/
     @Transactional
     public void withDraw() {
+        this.checkMemberStatus();
         Member member = this.getCurrentMember(); // 1
         Couple couple = this.coupleService.getCouple(member); // 2
         this.coupleService.deleteCouple(couple); // Couple, CoupleChallenge, CoupleQuestion Soft Delete
         this.memberRepository.delete(member);
     }
 
+    /**
+     * apple + android 회원가입
+     **/
+    public Member saveMemberFromAppleAndroid(String oauthId) {
+        return this.memberRepository.save(Member.builder()
+                .role(ROLE_USER)
+                .oauthId(oauthId)
+                .snsType(APPLE)
+                .memberStatus(NEWBIE)
+                .build());
+    }
+
 
     private Member getMemberFromOauthLoginRequest(OauthLoginRequestDto request) {
         Member member;
         try {
-            // 자식 tx 에서 예외 발생 시 rollback = true 로 설정해서 해당 메소드에서 예외 발생
+            // 자식 tx 에서 예외 발생 시 rollback = true 로 설정 해서 해당 메소드에서 예외 발생
             member = this.memberService.findMemberByOauthIdAndSnsType(request.getOauthId(), request.getSnsType());
         } catch (MemberNotFoundException exception) {
             /* oauthId 해당하는 회원 존재 x */
@@ -83,9 +102,9 @@ public class AuthService {
         return member;
     }
 
-    private OauthLoginResponseDto processOauthLogin(Member member) {
+    private OauthLoginResponse processOauthLogin(Member member) {
         SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(member));
-        OauthLoginResponseDto serviceToken = this.jwtService.createServiceToken(member);
+        OauthLoginResponse serviceToken = this.jwtService.createServiceToken(member);
         member.setRefreshToken(serviceToken.getRefreshToken());
         return serviceToken;
     }
@@ -127,5 +146,11 @@ public class AuthService {
 
     private Member getCurrentMember() {
         return this.memberService.getCurrentMember();
+    }
+
+    private void checkMemberStatus() {
+        if (this.getCurrentMember().getMemberStatus().equals(NEWBIE)) {
+            throw new MemberNeedExtraSignupException("회원 정보가 부족합니다 회원가입을 마무리 해주세요!");
+        }
     }
 }
