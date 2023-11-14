@@ -25,8 +25,6 @@ public class MemberImage {
 
     private String url;
 
-    @OneToOne(mappedBy = "memberImage", fetch = FetchType.LAZY)
-    private Member member;
 
     public GetProfileImageResponseDto toGetPartnerImageResponseDto() {
         return GetProfileImageResponseDto.builder()

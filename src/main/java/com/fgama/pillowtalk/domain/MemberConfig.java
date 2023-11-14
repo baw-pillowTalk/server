@@ -15,7 +15,7 @@ public class MemberConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_config_id")
     private Long id;
-    private Boolean locked;
+    private boolean isLocked;
     @Column(length = 2000)
     private String password;
     private Boolean push;
@@ -24,9 +24,7 @@ public class MemberConfig {
     private String language;
     private Boolean advertisement;
     private String version;
-
-    @OneToOne(mappedBy = "memberConfig", fetch = FetchType.LAZY)
-    private Member member;
+    
 
     public void setMemberLanguage(String language) {
         this.language = language;
