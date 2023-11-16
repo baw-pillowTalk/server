@@ -25,4 +25,28 @@ public class MemberExceptionHandler {
     ) {
         return ResponseEntity.ok(JSendResponse.of(exception));
     }
+
+    /* 비밀번호 수정 시 기존 비밀번호 존재 x */
+    @ExceptionHandler(PasswordNotFoundException.class)
+    public ResponseEntity<JSendResponse> passwordNotFoundExceptionHandler(
+            PasswordNotFoundException exception
+    ) {
+        return ResponseEntity.ok(JSendResponse.of(exception));
+    }
+
+    /* 비밀번호 설정 시 기존 비밀번호 존재 o */
+    @ExceptionHandler(PasswordAlreadyExistException.class)
+    public ResponseEntity<JSendResponse> passwordAlreadyExistExceptionHandler(
+            PasswordAlreadyExistException exception
+    ) {
+        return ResponseEntity.ok(JSendResponse.of(exception));
+    }
+
+    /* 비밀번호 일치하지 x */
+    @ExceptionHandler(PasswordNotMatchException.class)
+    public ResponseEntity<JSendResponse> passwordNotMatchExceptionHandler(
+            PasswordNotMatchException exception
+    ) {
+        return ResponseEntity.ok(JSendResponse.of(exception));
+    }
 }

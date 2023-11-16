@@ -2,7 +2,6 @@ package com.fgama.pillowtalk.api;
 
 import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.constant.MemberStatus;
-import com.fgama.pillowtalk.domain.MemberConfig;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.dto.member.*;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
@@ -210,62 +209,45 @@ public class MemberController {
         return ResponseEntity.ok(this.memberService.updateMemberPassword(request));
     }
 
-    @PutMapping("/api/v1/member/config/lock")
-    public JSendResponse unlockPassword(@RequestHeader("Authorization") String authorizationHeader) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            memberService.unlockPassword(accessToken);
 
+    /**
+     * - 잠금 해제
+     **/
+    @PutMapping("/api/v1/member/config/unlock")
+    public JSendResponse unlockPassword() {
+        try {
+            this.memberService.unlockPassword();
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
         } catch (RuntimeException e) {
             return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
-
         }
     }
 
+    /**
+     * - 회원의 답변 질문 가져오기
+     **/
     @GetMapping("/api/v1/member/config/question-type")
-    public JSendResponse getLockResetQuestion(@RequestHeader("Authorization") String authorizationHeader) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            MemberConfig config = memberService.getPasswordData(accessToken);
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("questionType", config.getQuestionType());
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
-        } catch (RuntimeException e) {
-            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
-
-        }
+    public ResponseEntity<Integer> getLockResetQuestion() {
+        return ResponseEntity.ok(this.memberService.getMemberQuestionType());
     }
 
+    /**
+     * - 화면 잠금 비밀번호 값 맞는지 체크
+     **/
     @PostMapping("/api/v1/member/config/check-password")
-    public JSendResponse checkPassword(@RequestHeader("Authorization") String authorizationHeader,
-                                       @RequestBody UpdatePasswordRequestDto request) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            memberService.checkPassword(accessToken, request.getPassword());
-
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
-        } catch (RuntimeException e) {
-            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
-
-        }
+    public ResponseEntity<Void> checkPassword(
+            @Valid @RequestBody UpdatePasswordRequestDto request) {
+        this.memberService.checkPassword(request);
+        return ResponseEntity.ok().build();
     }
 
+    /**
+     * - 회원 답변에 대한 질문 체크
+     **/
     @PostMapping("/api/v1/member/config/valid-answer")
-    public JSendResponse validateLockResetAnswer(@RequestHeader("Authorization") String authorizationHeader,
-                                                 @RequestBody ValidAnswerRequest request) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            boolean validAnswer = memberService.validAnswer(accessToken, request.getAnswer());
-            boolean answer = validAnswer;
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("isValid", validAnswer);
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
-        } catch (RuntimeException e) {
-            return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
-
-        }
+    public ResponseEntity<Boolean> validateLockResetAnswer(
+            @Valid @RequestBody CheckMemberAnswerValidationRequestDto request) {
+        return ResponseEntity.ok(this.memberService.validAnswer(request));
     }
 
     /***
@@ -327,13 +309,6 @@ public class MemberController {
 
     @Data
     static class ValidAnswerRequest {
-        private String answer;
-    }
-
-    @Data
-    static class UpdatePasswordRequestDto {
-        private String password;
-        private String questionType;
         private String answer;
     }
 }
