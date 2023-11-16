@@ -51,7 +51,6 @@ public class AuthService {
         Member member = this.memberService.getCurrentMember();
         // fcm null 설정
         member.logout();
-        member.deleteRefreshToken();
         SecurityUtil.clearSecurityContext();
         return member.getId();
     }

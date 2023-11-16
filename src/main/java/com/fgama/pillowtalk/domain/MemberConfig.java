@@ -2,12 +2,14 @@ package com.fgama.pillowtalk.domain;
 
 import com.fgama.pillowtalk.dto.member.SetMemberPasswordRequestDto;
 import com.fgama.pillowtalk.dto.member.UpdateMemberPasswordRequestDto;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Getter
 @Setter
 public class MemberConfig {
@@ -24,7 +26,7 @@ public class MemberConfig {
     private String language;
     private Boolean advertisement;
     private String version;
-    
+
 
     public void setMemberLanguage(String language) {
         this.language = language;

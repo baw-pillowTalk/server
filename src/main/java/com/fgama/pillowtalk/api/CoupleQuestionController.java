@@ -38,8 +38,6 @@ public class CoupleQuestionController {
         } catch (RuntimeException e) {
             return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
-
-
     }
 
 

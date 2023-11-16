@@ -68,9 +68,6 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member")
     private List<ChattingMessage> messageList;
 
-    public void deleteRefreshToken() {
-        this.refreshToken = null;
-    }
 
     public void updateMemberImage(MemberImage memberImage) {
         this.memberImage = memberImage;
@@ -82,6 +79,7 @@ public class Member extends BaseEntity {
 
     public void logout() {
         this.fcmToken = null;
+        this.refreshToken = null;
     }
 
     public Void updateSignal(UpdateMySignalRequestDto request) {
@@ -95,7 +93,8 @@ public class Member extends BaseEntity {
 
     public Long completeMemberSignup(String inviteCode,
                                      CompleteMemberSignupRequestDto request,
-                                     MemberImage memberImage) {
+                                     MemberImage memberImage,
+                                     MemberConfig memberConfig) {
         this.nickname = request.getNickname();
         this.marketingConsent = request.getMarketingConsent();
         this.fcmToken = request.getFcmToken();
@@ -103,6 +102,7 @@ public class Member extends BaseEntity {
         this.inviteCode = inviteCode;
         this.signal = 50;
         this.memberImage = memberImage;
+        this.memberConfig = memberConfig;
         return this.id;
     }
 

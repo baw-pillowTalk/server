@@ -71,7 +71,7 @@ public class AuthController {
      * - jwtAuthenticationFilter 예외 API
      */
     @PostMapping("/api/v1/reissue")
-    public ResponseEntity<OauthLoginResponse> renewAccessToken(
+    public ResponseEntity<OauthLoginResponse> reissue(
             HttpServletRequest httpServletRequest
     ) {
         return ResponseEntity.ok(this.authService.reissue(httpServletRequest));

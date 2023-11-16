@@ -1,29 +1,31 @@
 package com.fgama.pillowtalk.exception.auth;
 
 import com.fgama.pillowtalk.api.AuthController;
-import com.fgama.pillowtalk.exception.ErrorMessage;
+import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(basePackageClasses = AuthController.class)
+@Slf4j
 public class AuthExceptionHandler {
-
+    /* 인증 실패 회원 오류 */
     @ExceptionHandler(UnauthorizedMemberException.class)
-    public ResponseEntity<ErrorMessage> unauthorizedMemberExceptionHandler(
+    public ResponseEntity<JSendResponse> unauthorizedMemberExceptionHandler(
             UnauthorizedMemberException exception
     ) {
-        return ResponseEntity.badRequest().body(
-                ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+        log.warn("UnauthorizedMemberException Occurs");
+        return ResponseEntity.ok(JSendResponse.of(exception));
     }
 
+    /* 회원 존재 x 오류 */
     @ExceptionHandler(MemberNotFoundException.class)
-    public ResponseEntity<ErrorMessage> memberNotFoundExceptionHandler(
+    public ResponseEntity<JSendResponse> memberNotFoundExceptionHandler(
             MemberNotFoundException exception
     ) {
-        return ResponseEntity.badRequest().body(
-                ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+        log.warn("MemberNotFoundException Occurs");
+        return ResponseEntity.ok(JSendResponse.of(exception));
     }
 }
