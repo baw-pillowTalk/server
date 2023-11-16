@@ -6,7 +6,7 @@ import com.fgama.pillowtalk.constant.SnsType;
 import com.fgama.pillowtalk.domain.*;
 import com.fgama.pillowtalk.dto.member.*;
 import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
-import com.fgama.pillowtalk.exception.member.MemberNotFoundException;
+import com.fgama.pillowtalk.exception.member.*;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
@@ -176,9 +176,10 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    public void unlockPassword(String accessToken) throws RuntimeException {
+    @Transactional
+    public void unlockPassword() throws RuntimeException {
         Member member = this.getCurrentMember();
-        if (member.getMemberConfig().isLocked()) {
+        if (member.getMemberConfig().isLocked()) { // 이미 걸려 있는 경우
             member.getMemberConfig().setLocked(false);
             member.getMemberConfig().setPassword(null);
             member.getMemberConfig().setAnswer(null);
@@ -186,7 +187,6 @@ public class MemberService {
         } else {
             throw new RuntimeException("잠금이 아닙니다.");
         }
-        memberRepository.save(member);
     }
 
     public MemberConfig getPasswordData(String accessToken) throws RuntimeException {
@@ -195,22 +195,26 @@ public class MemberService {
         if (member.getMemberConfig().isLocked()) {
             return member.getMemberConfig();
         } else {
-            throw new RuntimeException("잠금상태가 아닙니다.");
+            throw new RuntimeException("잠금 상태가 아닙니다.");
         }
     }
 
 
-    public void checkPassword(String accessToken, String password) throws RuntimeException {
+    @Transactional
+    public void checkPassword(UpdatePasswordRequestDto request) throws RuntimeException {
         Member member = this.getCurrentMember();
-        if (!password.equals(member.getMemberConfig().getPassword())) {
-            throw new RuntimeException("비밀번호 틀림");
+        if (!request.getPassword().equals(member.getMemberConfig().getPassword())) {
+            throw new PasswordNotMatchException("비밀번호가 잁치하지 않습니다.");
         }
-
     }
 
-    public boolean validAnswer(String accessToken, String answer) throws RuntimeException {
-        Member member = this.getCurrentMember();
-        return answer.equals(member.getMemberConfig().getAnswer());
+    @Transactional
+    public boolean validAnswer(CheckMemberAnswerValidationRequestDto request) throws RuntimeException {
+        MemberConfig currentMemberConfig = this.getCurrentMemberConfig();
+        if (currentMemberConfig.getAnswer() == null) {
+            throw new AnswerNotFoundException("질문 답변이 존재하지 않습니다.");
+        }
+        return Objects.equals(currentMemberConfig.getAnswer(), request.getAnswer());
 
     }
 
@@ -331,7 +335,7 @@ public class MemberService {
     }
 
     /**
-     * = 회원 언어 설정하기
+     * - 회원 언어 설정하기
      **/
     @Transactional
     public Void setMemberLanguage(SetMemberLanguageRequestDto request) {
@@ -352,7 +356,11 @@ public class MemberService {
      **/
     @Transactional
     public Void setMemberPassword(SetMemberPasswordRequestDto request) {
-        return this.getCurrentMemberConfig().setMemberPassword(request);
+        MemberConfig memberConfig = this.getCurrentMemberConfig();
+        if (memberConfig.getPassword() != null) {
+            throw new PasswordAlreadyExistException("기존 비밀번호가 존재합니다.");
+        }
+        return memberConfig.setMemberPassword(request);
     }
 
     /**
@@ -360,7 +368,19 @@ public class MemberService {
      **/
     @Transactional
     public Void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
-        return this.getCurrentMemberConfig().updateMemberPassword(request);
+        MemberConfig config = this.getCurrentMemberConfig();
+        if (config.getPassword() == null) {
+            throw new PasswordNotFoundException("기존 비밀번호가 존재하지 않습니다.");
+        }
+        return config.updateMemberPassword(request);
+    }
+
+    /**
+     * - 회원 답변 질문 가져오기
+     **/
+    @Transactional(readOnly = true)
+    public int getMemberQuestionType() {
+        return this.getCurrentMemberConfig().getQuestionType();
     }
 
 
@@ -393,6 +413,7 @@ public class MemberService {
         Member member = this.getCurrentMember();
         return member.updateSignal(request);
     }
+
 
     private Couple getCouple(Member member) {
         return coupleRepository.findCoupleById(member.getCoupleId())

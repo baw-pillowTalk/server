@@ -1,5 +1,6 @@
 package com.fgama.pillowtalk.exception.global;
 
+import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.exception.ErrorMessage;
 import com.fgama.pillowtalk.exception.ErrorMessage.ValidationError;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<?> illegalArgumentExceptionHandler(
             IllegalArgumentException exception) {
         log.warn("IllegalArgumentException Occurs");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+        return ResponseEntity.ok(JSendResponse.of(exception));
     }
 
     @ExceptionHandler(MemberNeedExtraSignupException.class)
@@ -35,8 +35,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             MemberNeedExtraSignupException exception
     ) {
         log.warn("MemberNeedExtraSignupException Occurs");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+        return ResponseEntity.ok(JSendResponse.of(exception));
     }
 
     @ExceptionHandler(Exception.class)
@@ -44,8 +43,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             Exception exception
     ) {
         log.warn("Exception Occurs");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorMessage.of(exception, HttpStatus.BAD_REQUEST));
+        return ResponseEntity.ok(JSendResponse.of(exception));
     }
 
     @Override

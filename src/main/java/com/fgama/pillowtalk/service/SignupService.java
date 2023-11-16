@@ -1,6 +1,7 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.domain.MemberConfig;
 import com.fgama.pillowtalk.domain.MemberImage;
 import com.fgama.pillowtalk.dto.signup.CompleteMemberSignupRequestDto;
 import com.fgama.pillowtalk.exception.signup.MemberStateNotEqualException;
@@ -28,13 +29,20 @@ public class SignupService {
         if (request.getState() != null) {
             this.checkMemberState(member, request);
         }
+
         String inviteCode = this.makeInviteCode();
         MemberImage basicImage = MemberImage.builder()
                 .imagePath(defaultImageUrl + ".png")
                 .fileName("default")
                 .url(defaultImageUrl + ".png")
                 .build();
-        return member.completeMemberSignup(inviteCode, request, basicImage);
+
+        MemberConfig memberConfig = MemberConfig.builder()
+                .isLocked(false)
+                .advertisement(request.getMarketingConsent())
+                .build();
+
+        return member.completeMemberSignup(inviteCode, request, basicImage, memberConfig);
     }
 
     private void checkMemberState(Member member, CompleteMemberSignupRequestDto request) {

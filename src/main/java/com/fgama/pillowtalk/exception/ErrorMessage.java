@@ -16,7 +16,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 public class ErrorMessage {
-
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<ValidationError> errors;
 
