@@ -280,8 +280,9 @@ public class MemberService {
      * - 처음 앱 구동시 호출 되는 회원 상태 호출 API
      **/
     @Transactional(readOnly = true)
-    public MemberStatus getMemberStatus() {
-        return this.getCurrentMember().getMemberStatus();
+    public GetMemberStatusResponseDto getMemberStatus() {
+        MemberStatus memberStatus = this.getCurrentMember().getMemberStatus();
+        return new GetMemberStatusResponseDto(memberStatus.name());
     }
 
     /**

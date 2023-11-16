@@ -1,7 +1,6 @@
 package com.fgama.pillowtalk.api;
 
 import com.fgama.pillowtalk.constant.HttpResponse;
-import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.dto.member.*;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
@@ -41,7 +40,7 @@ public class MemberController {
      * - 비회원인 경우 아무 것도 없을 것 -> 프론트에서 login API 호출 -> 로그인 후, case 01) 을 따름
      **/
     @GetMapping("/api/v1/member/status")
-    public ResponseEntity<MemberStatus> getMemberStatus() {
+    public ResponseEntity<GetMemberStatusResponseDto> getMemberStatus() {
         return ResponseEntity.ok(this.memberService.getMemberStatus());
     }
 
