@@ -82,9 +82,8 @@ public class Member extends BaseEntity {
         this.refreshToken = null;
     }
 
-    public Void updateSignal(UpdateMySignalRequestDto request) {
+    public void updateSignal(UpdateMySignalRequestDto request) {
         this.signal = request.getMySignal();
-        return null;
     }
 
     public void setRefreshToken(String refreshToken) {

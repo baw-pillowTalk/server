@@ -165,17 +165,6 @@ public class MemberService {
 
     }
 
-    public void updatePassword(String accessToken, String password) throws RuntimeException {
-        Member member = this.getCurrentMember();
-        if (member.getMemberConfig().isLocked()) {
-            member.getMemberConfig().setPassword(password);
-        } else {
-            throw new RuntimeException("비번 초기 값이 없습니다.");
-
-        }
-        memberRepository.save(member);
-    }
-
     @Transactional
     public void unlockPassword() throws RuntimeException {
         Member member = this.getCurrentMember();
@@ -273,16 +262,19 @@ public class MemberService {
 
     @Transactional
     public void updateNickname(UpdateNicknameRequestDto request) throws RuntimeException {
-        this.getCurrentMember().setNickname(request.getNickname());
+        Member currentMember = this.getCurrentMember();
+        if (currentMember.getNickname().equals(request.getNickname())) {
+            throw new NickNameEqualException("기존 닉네임과 동일합니다.");
+        }
+        currentMember.setNickname(request.getNickname());
     }
 
     /**
      * - 처음 앱 구동시 호출 되는 회원 상태 호출 API
      **/
     @Transactional(readOnly = true)
-    public GetMemberStatusResponseDto getMemberStatus() {
-        MemberStatus memberStatus = this.getCurrentMember().getMemberStatus();
-        return new GetMemberStatusResponseDto(memberStatus.name());
+    public MemberStatus getMemberStatus() {
+        return this.getCurrentMember().getMemberStatus();
     }
 
     /**
@@ -339,9 +331,8 @@ public class MemberService {
      * - 회원 언어 설정하기
      **/
     @Transactional
-    public Void setMemberLanguage(SetMemberLanguageRequestDto request) {
+    public void setMemberLanguage(SetMemberLanguageRequestDto request) {
         this.getCurrentMemberConfig().setMemberLanguage(request.getLanguage());
-        return null;
     }
 
     /**
@@ -356,24 +347,24 @@ public class MemberService {
      * - 회원 비밀번호 설정하기
      **/
     @Transactional
-    public Void setMemberPassword(SetMemberPasswordRequestDto request) {
+    public void setMemberPassword(SetMemberPasswordRequestDto request) {
         MemberConfig memberConfig = this.getCurrentMemberConfig();
         if (memberConfig.getPassword() != null) {
             throw new PasswordAlreadyExistException("기존 비밀번호가 존재합니다.");
         }
-        return memberConfig.setMemberPassword(request);
+        memberConfig.setMemberPassword(request);
     }
 
     /**
      * - 회원 비밀번호 업데이트
      **/
     @Transactional
-    public Void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
+    public void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
         MemberConfig config = this.getCurrentMemberConfig();
         if (config.getPassword() == null) {
             throw new PasswordNotFoundException("기존 비밀번호가 존재하지 않습니다.");
         }
-        return config.updateMemberPassword(request);
+        config.updateMemberPassword(request);
     }
 
     /**
@@ -410,9 +401,9 @@ public class MemberService {
      * - 회원 시그널 수정하기
      **/
     @Transactional
-    public Void updateMemberSignal(UpdateMySignalRequestDto request) {
+    public void updateMemberSignal(UpdateMySignalRequestDto request) {
         Member member = this.getCurrentMember();
-        return member.updateSignal(request);
+        member.updateSignal(request);
     }
 
 

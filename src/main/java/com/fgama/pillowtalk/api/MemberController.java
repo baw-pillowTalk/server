@@ -12,8 +12,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,16 +38,20 @@ public class MemberController {
      * - 비회원인 경우 아무 것도 없을 것 -> 프론트에서 login API 호출 -> 로그인 후, case 01) 을 따름
      **/
     @GetMapping("/api/v1/member/status")
-    public ResponseEntity<GetMemberStatusResponseDto> getMemberStatus() {
-        return ResponseEntity.ok(this.memberService.getMemberStatus());
+    public JSendResponse getMemberStatus() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("memberStatus", this.memberService.getMemberStatus());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 초대 코드 가져오기 API
      **/
     @GetMapping("/api/v1/member/invite-code")
-    public ResponseEntity<String> getInviteCode() {
-        return ResponseEntity.ok(this.memberService.getInviteCode());
+    public JSendResponse getInviteCode() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("inviteCode", this.memberService.getInviteCode());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
 
@@ -59,11 +61,11 @@ public class MemberController {
      * 변경 후 파트너 에게 공지
      */
     @PatchMapping("/api/v1/member/chatting-room-status")
-    public ResponseEntity<Void> changeChatRoomStatus(
+    public JSendResponse changeChatRoomStatus(
             @Valid @RequestBody ChangeChattingRoomStateRequestDto request
     ) {
-        this.memberService.changeChatRoomStatus(request);
-        return ResponseEntity.ok().build();
+        JSONObject jsonObject = new JSONObject();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /***
@@ -94,66 +96,80 @@ public class MemberController {
      * - fcm 변경 API
      **/
     @PatchMapping("/api/v1/member/fcm-token")
-    public ResponseEntity<Void> updateFcmToken(
+    public JSendResponse updateFcmToken(
             @RequestBody @Valid UpdateFcmTokenRequestDto request
     ) {
         this.memberService.updateFcmToken(request);
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - nickname 변경 API
      **/
     @PatchMapping("/api/v1/member/nickname")
-    public ResponseEntity<Void> updateUserNickname(
+    public JSendResponse updateUserNickname(
             @RequestBody @Valid UpdateNicknameRequestDto request) {
         this.memberService.updateNickname(request);
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 파트너 이미지 가져오기 API
      **/
     @GetMapping("/api/v1/member/partner-image")
-    public ResponseEntity<GetProfileImageResponseDto> getPartnerProfileImage() {
-        return new ResponseEntity<>(this.memberService.getPartnerProfileImage(), HttpStatus.OK);
+    public JSendResponse getPartnerProfileImage() {
+        GetProfileImageResponseDto partnerProfileImage = this.memberService.getPartnerProfileImage();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("fileName", partnerProfileImage.getFileName());
+        jsonObject.put("imagePath", partnerProfileImage.getImagePath());
+        jsonObject.put("url", partnerProfileImage.getUrl());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 이미지 가져오기 API
      **/
     @GetMapping("/api/v1/member/image")
-    public ResponseEntity<GetProfileImageResponseDto> getMyProfileImage() {
-        return new ResponseEntity<>(this.memberService.getMyProfileImage(), HttpStatus.OK);
+    public JSendResponse getMyProfileImage() {
+        GetProfileImageResponseDto myProfileImage = this.memberService.getMyProfileImage();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("fileName", myProfileImage.getFileName());
+        jsonObject.put("imagePath", myProfileImage.getImagePath());
+        jsonObject.put("url", myProfileImage.getUrl());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 이미지 수정 하기 API
      **/
     @PutMapping("/api/v1/member/image")
-    public ResponseEntity<Void> updateMyProfileImage(
+    public JSendResponse updateMyProfileImage(
             @RequestBody @Valid UpdateProfileImageRequestDto request
     ) {
         this.memberService.updateMyProfileImage(request);
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 회원 이미지 기본 이미지로 변경 API
      **/
     @PutMapping("/api/v1/member/default-image/{default_image}")
-    public ResponseEntity<Void> updateUserProfileImage(
+    public JSendResponse updateUserProfileImage(
             @PathVariable(name = "default_image") Long defaultImage) {
         this.memberService.updateToDefaultImage(defaultImage);
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 회원 정보 가져오기 API
      **/
     @GetMapping("/api/v1/member")
-    public ResponseEntity<GetMemberInfoResponseDto> getMemberInfo() {
-        return ResponseEntity.ok().body(this.memberService.getMemberInfo());
+    public JSendResponse getMemberInfo() {
+        GetMemberInfoResponseDto memberInfo = this.memberService.getMemberInfo();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("nickname", memberInfo.getNickName());
+        jsonObject.put("snsType", memberInfo.getSnsType());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
 
@@ -161,51 +177,65 @@ public class MemberController {
      * - 회원 파트너 정보 가져오기
      **/
     @GetMapping("/api/v1/member/partner")
-    public ResponseEntity<GetPartnerInfoResponseDto> getPartnerInfo() {
-        return ResponseEntity.ok().body(this.memberService.getPartnerInfo());
+    public JSendResponse getPartnerInfo() {
+        GetPartnerInfoResponseDto partnerInfo = this.memberService.getPartnerInfo();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("nickname", partnerInfo.getNickName());
+        jsonObject.put("snsType", partnerInfo.getSnsType());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 설정(Config) 값 가져오기
      **/
     @GetMapping("/api/v1/member/config")
-    public ResponseEntity<GetMemberConfigInfoResponseDto> getConfigurationInfo() {
-        return ResponseEntity.ok(this.memberService.getMemberConfig());
+    public JSendResponse getConfigurationInfo() {
+        GetMemberConfigInfoResponseDto memberConfig = this.memberService.getMemberConfig();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("language", memberConfig.getLanguage());
+        jsonObject.put("lock", memberConfig.getLock());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 언어 설정 API
      **/
     @PutMapping("/api/v1/member/config/language")
-    public ResponseEntity<Void> setMemberLanguage(
+    public JSendResponse setMemberLanguage(
             @Valid @RequestBody SetMemberLanguageRequestDto request) {
-        return ResponseEntity.ok(this.memberService.setMemberLanguage(request));
+        this.memberService.setMemberLanguage(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 회원 비밀번호 가져오기 API
      **/
     @GetMapping("/api/v1/member/config/password")
-    public ResponseEntity<String> getPassword() {
-        return ResponseEntity.ok(this.memberService.getMemberPassword());
+    public JSendResponse getPassword() {
+        String memberPassword = this.memberService.getMemberPassword();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("password", memberPassword);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 비밀번호 설정하기 API
      **/
     @PostMapping("/api/v1/member/config/password")
-    public ResponseEntity<Void> setMemberPassword(
+    public JSendResponse setMemberPassword(
             @Valid @RequestBody SetMemberPasswordRequestDto request) {
-        return ResponseEntity.ok(this.memberService.setMemberPassword(request));
+        this.memberService.setMemberPassword(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 회원 비밀번호 수정 하기 API
      **/
     @PatchMapping("/api/v1/member/config/password")
-    public ResponseEntity<Void> updatePassword(
+    public JSendResponse updatePassword(
             @Valid @RequestBody UpdateMemberPasswordRequestDto request) {
-        return ResponseEntity.ok(this.memberService.updateMemberPassword(request));
+        this.memberService.updateMemberPassword(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
 
@@ -226,28 +256,35 @@ public class MemberController {
      * - 회원의 답변 질문 가져오기
      **/
     @GetMapping("/api/v1/member/config/question-type")
-    public ResponseEntity<Integer> getLockResetQuestion() {
-        return ResponseEntity.ok(this.memberService.getMemberQuestionType());
+    public JSendResponse getLockResetQuestion() {
+        int memberQuestionType = this.memberService.getMemberQuestionType();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("questionType", memberQuestionType);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 화면 잠금 비밀번호 값 맞는지 체크
      **/
     @PostMapping("/api/v1/member/config/check-password")
-    public ResponseEntity<Void> checkPassword(
+    public JSendResponse checkPassword(
             @Valid @RequestBody UpdatePasswordRequestDto request) {
         this.memberService.checkPassword(request);
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /**
      * - 회원 답변에 대한 질문 체크
      **/
     @PostMapping("/api/v1/member/config/valid-answer")
-    public ResponseEntity<Boolean> validateLockResetAnswer(
+    public JSendResponse validateLockResetAnswer(
             @Valid @RequestBody CheckMemberAnswerValidationRequestDto request) {
-        return ResponseEntity.ok(this.memberService.validAnswer(request));
+        boolean result = this.memberService.validAnswer(request);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("result", result);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
+
 
     /***
      * 닉네임 수정 횟수 초과 체크
@@ -273,25 +310,33 @@ public class MemberController {
      * 나의 시그널 가져오기
      **/
     @GetMapping("/api/v1/member/signal")
-    public ResponseEntity<GetSignalInfoResponseDto> getMySignal() {
-        return ResponseEntity.ok(this.memberService.getMySignal());
+    public JSendResponse getMySignal() {
+        GetSignalInfoResponseDto mySignal = this.memberService.getMySignal();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("mySignal", mySignal.getSignal());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * 파트너 시그널 가져오기
      **/
     @GetMapping("/api/v1/member/partner/signal")
-    public ResponseEntity<GetSignalInfoResponseDto> getPartnerSignal() {
-        return ResponseEntity.ok(this.memberService.getPartnerSignal());
+    public JSendResponse getPartnerSignal() {
+        GetSignalInfoResponseDto partnerSignal = this.memberService.getPartnerSignal();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("partnerSignal", partnerSignal.getSignal());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+
     }
 
     /**
      * 내 시그널 수정 하기
      **/
     @PostMapping("/api/v1/member/signal")
-    public ResponseEntity<Void> updateMySignal(
+    public JSendResponse updateMySignal(
             @Valid @RequestBody UpdateMySignalRequestDto request) {
-        return ResponseEntity.ok(this.memberService.updateMemberSignal(request));
+        this.memberService.updateMemberSignal(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
 

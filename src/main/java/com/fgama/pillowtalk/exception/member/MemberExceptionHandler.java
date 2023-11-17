@@ -49,4 +49,12 @@ public class MemberExceptionHandler {
     ) {
         return ResponseEntity.ok(JSendResponse.of(exception));
     }
+
+    /* 닉네임 변경시 닉네임 동일한 경우 */
+    @ExceptionHandler(NickNameEqualException.class)
+    public ResponseEntity<JSendResponse> nicknameEqualExceptionHandler(
+            NickNameEqualException exception
+    ) {
+        return ResponseEntity.ok(JSendResponse.of(exception));
+    }
 }
