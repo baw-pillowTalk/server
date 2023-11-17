@@ -1,9 +1,9 @@
 package com.fgama.pillowtalk.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fgama.pillowtalk.exception.ErrorMessage;
+import com.fgama.pillowtalk.constant.HttpResponse;
+import com.fgama.pillowtalk.dto.JSendResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -34,13 +34,12 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                                                      HttpServletResponse response,
                                                      AuthenticationException authException
     ) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 404 Unauthorized error
+        response.setStatus(HttpServletResponse.SC_OK); // 404 Unauthorized error
         response.setContentType("application/json,charset=utf-8");
-
 
         try (OutputStream os = response.getOutputStream()) {
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.writeValue(os, ErrorMessage.of(authException, HttpStatus.UNAUTHORIZED));
+            objectMapper.writeValue(os, new JSendResponse(HttpResponse.HTTP_FAIL, "인증 과정에서 오류가 발생했습니다.", null));
             os.flush();
         }
     }

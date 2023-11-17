@@ -32,15 +32,13 @@ public class MemberConfig {
         this.language = language;
     }
 
-    public Void setMemberPassword(SetMemberPasswordRequestDto request) {
+    public void setMemberPassword(SetMemberPasswordRequestDto request) {
         this.password = request.getPassword();
         this.questionType = request.getQuestionType();
         this.answer = request.getAnswer();
-        return null;
     }
 
-    public Void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
+    public void updateMemberPassword(UpdateMemberPasswordRequestDto request) {
         this.password = request.getPassword();
-        return null;
     }
 }
