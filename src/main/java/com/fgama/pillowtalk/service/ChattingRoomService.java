@@ -1,12 +1,14 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.components.FileDetail;
-import com.fgama.pillowtalk.domain.ChattingMessage;
-import com.fgama.pillowtalk.domain.ChattingRoom;
-import com.fgama.pillowtalk.domain.Couple;
-import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.domain.*;
+import com.fgama.pillowtalk.domain.chattingMessage.*;
+import com.fgama.pillowtalk.dto.member.GetPartnerInfoResponseDto;
+import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
+import com.fgama.pillowtalk.repository.ChallengeRepository;
 import com.fgama.pillowtalk.repository.ChattingMessageRepository;
 import com.fgama.pillowtalk.repository.ChattingRoomRepository;
+import com.fgama.pillowtalk.repository.CoupleQuestionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,7 +25,10 @@ import java.util.List;
 public class ChattingRoomService {
     private final ChattingRoomRepository chattingRoomRepository;
     private final ChattingMessageRepository chattingMessageRepository;
+    private final CoupleQuestionRepository coupleQuestionRepository;
+    private final ChallengeRepository challengeRepository;
     private final FileUploadService fileUploadService;
+    private final FirebaseCloudMessageService firebaseCloudMessageService;
     private final MemberService memberService;
     private final CoupleService coupleService;
 
@@ -66,52 +71,229 @@ public class ChattingRoomService {
         return rooms;
     }
 
-    public ChattingMessage addChattingMessage(String accessToken, String message, Long index, String emoji, String url, MultipartFile multipartFile, String type) throws NullPointerException {
-        log.info("add chattingMessage accessToken: " + accessToken);
-        Member member = this.getMember();
-        Couple couple = this.coupleService.getCouple(member);
+    public ChattingMessage addQuestionChattingMessage(Long questionIndex) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
 
-        Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
+        QuestionChattingMessage chattingMessage = QuestionChattingMessage.builder()
+                .questionIndex(questionIndex)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
 
-        log.info("add chattingMessage find member");
-        ChattingMessage chattingMessage = new ChattingMessage();
-        chattingMessage.setMessage(message);
-        chattingMessage.setIsRead(partner.getChattingRoomStatus());
-        chattingMessage.setType(type);
-        chattingMessage.setNumber((long) couple.getChattingRoom().getMessageList().size());
-        chattingMessage.setChattingRoom(couple.getChattingRoom());
-        log.info("add chattingMessage find chattingRoom");
+        saveChattingMessage(couple, chattingMessage);
+        CoupleQuestion coupleQuestion = coupleQuestionRepository.findByNumberAndCoupleId(Math.toIntExact(questionIndex), couple.getId());
 
-        FileDetail fileDetail;
-        switch (type) {
-            case "text":
-                break;
-            case "voice":
-                fileDetail = fileUploadService.save(multipartFile);
-                chattingMessage.setResourceUrl("https://s3.ap-northeast-2.amazonaws.com/" + "pillow.images/" + fileDetail.getPath());
-                break;
-            case "image":
-                fileDetail = fileUploadService.save(multipartFile);
-                chattingMessage.setResourceUrl("https://s3.ap-northeast-2.amazonaws.com/" + "pillow.images/" + fileDetail.getPath());
-                break;
-            case "video":
-                chattingMessage.setResourceUrl(url);
-                break;
-            case "question":
-                chattingMessage.setQuestionIndex(index);
-                break;
-            case "challenge":
-                chattingMessage.setChallengeIndex(index);
-                break;
-            case "emoji":
-                chattingMessage.setEmoji(emoji);
-                chattingMessage.setResourceUrl(url);
-                break;
+        String fcmDetail = firebaseCloudMessageService.questionMessageFcmJsonObject(chattingMessage, coupleQuestion);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addCompleteChallengeChattingMessage(int challengeIndex) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+        CompleteChallengeChattingMessage chattingMessage = CompleteChallengeChattingMessage.builder()
+                .challengeIndex(challengeIndex)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+        CoupleChallenge challenge = challengeRepository.findByCoupleIdAndNumber(couple.getId(), challengeIndex);
+        String fcmDetail = firebaseCloudMessageService.completeChallengeMessageFcmJsonObject(chattingMessage, challenge);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addChallengeChattingMessage(int challengeIndex) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+        ChallengeChattingMessage chattingMessage = ChallengeChattingMessage.builder()
+                .challengeIndex(challengeIndex)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+        CoupleChallenge challenge = challengeRepository.findByCoupleIdAndNumber(couple.getId(), challengeIndex);
+        String fcmDetail = firebaseCloudMessageService.challengeMessageFcmJsonObject(chattingMessage, challenge);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addTextChattingMessage(String textMessage) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = memberService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        TextChattingMessage chattingMessage = TextChattingMessage.builder()
+                .message(textMessage)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.textMessageFcmJsonObject(chattingMessage);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addImageChattingMessage(MultipartFile imageFile) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        FileDetail fileDetail = fileUploadService.save(imageFile);
+        String url = "https://s3.ap-northeast-2.amazonaws.com/" + "pillow.images/" + fileDetail.getPath();
+
+        ImageChattingMessage chattingMessage = ImageChattingMessage.builder()
+                .resourceUrl(url)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.imageMessageFcmJsonObject(chattingMessage, url);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addVoiceChattingMessage(MultipartFile voiceFile) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        FileDetail fileDetail = fileUploadService.save(voiceFile);
+        //todo 스토리지 바꾸기
+        String url = "https://s3.ap-northeast-2.amazonaws.com/" + "pillow.images/" + fileDetail.getPath();
+
+        VoiceChattingMessage chattingMessage = VoiceChattingMessage.builder()
+                .resourceUrl(url)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.voiceMessageFcmJsonObject(chattingMessage, url);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addSignalChattingMessage(Integer signalPercent) throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        SignalChattingMessage chattingMessage = SignalChattingMessage.builder()
+                .signalPercent(signalPercent)
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.signalMessageFcmJsonObject(chattingMessage);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addResetPasswordChattingMessage() throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        ResetPasswordChattingMessage chattingMessage = ResetPasswordChattingMessage.builder()
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.resetPartnerPasswordMessageFcmJsonObject(chattingMessage);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    public ChattingMessage addPressForAnswerChattingMessage() throws NullPointerException {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+        Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
+
+        PressForAnswerChattingMessage chattingMessage = PressForAnswerChattingMessage.builder()
+                .self(self)
+                .isRead(partner.getChattingRoomStatus())
+                .chattingRoom(couple.getChattingRoom())
+                .number((long) couple.getChattingRoom().getMessageList().size())
+                .build();
+
+        saveChattingMessage(couple, chattingMessage);
+
+        String fcmDetail = firebaseCloudMessageService.pressForAnswerMessageFcmJsonObject(chattingMessage);
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+
+        return chattingMessage;
+    }
+
+    private ChattingRoom saveChattingMessage(Couple couple, ChattingMessage chattingMessage) {
+        ChattingRoom chattingRoom = chattingRoomRepository.findChattingRoomsByCoupleId(couple.getId()).get(0);
+        chattingRoom.addMessage(chattingMessage);
+        return chattingRoomRepository.save(chattingRoom);
+    }
+
+    public boolean resetPartnerPassword(int chattingMessageIndex) {
+        Member self = memberService.getCurrentMember();
+        Couple couple = this.coupleService.getCouple(self);
+
+        ChattingRoom chattingRoom = chattingRoomRepository.findChattingRoomsByCoupleId(couple.getId()).get(0);
+        if (chattingRoom.getMessageList().get(chattingMessageIndex) instanceof ResetPasswordChattingMessage) {
+            ResetPasswordChattingMessage resetPasswordChattingMessage = (ResetPasswordChattingMessage) chattingRoom.getMessageList().get(chattingMessageIndex);
+            if (resetPasswordChattingMessage.isPasswordResetExpired() == true) {
+                return false;
+            }
+
         }
+        List<ChattingMessage> messageList = chattingRoom.getMessageList();
+        for (ChattingMessage chattingMessage : messageList) {
+            if (chattingMessage instanceof ResetPasswordChattingMessage) {
+                ResetPasswordChattingMessage resetPasswordChattingMessage = (ResetPasswordChattingMessage) chattingMessage;
+                if (resetPasswordChattingMessage.isPasswordResetExpired() == false) {
+                    resetPasswordChattingMessage.changePasswordResetExpired();
+                }
+            }
 
+        }
+        return true;
 
-        log.info("add chattingMessage done");
-        return chattingMessageRepository.save(chattingMessage);
     }
 
     public Member getMember() {

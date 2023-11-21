@@ -21,7 +21,7 @@ public class NoticeBoardService {
     }
 
     public List<NoticeBoard> getNoticeBoardList(int pageNo) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "createAt");
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
         Page<NoticeBoard> all = noticeBoardRepository.findByCreator("master", pageRequest);
 

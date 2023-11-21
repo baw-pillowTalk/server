@@ -1,12 +1,14 @@
 package com.fgama.pillowtalk.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fgama.pillowtalk.components.AmazonS3ResourceStorage;
 import com.fgama.pillowtalk.constant.HttpResponse;
-import com.fgama.pillowtalk.domain.ChattingMessage;
+import com.fgama.pillowtalk.domain.chattingMessage.ChattingMessage;
 import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.JSendResponse;
+import com.fgama.pillowtalk.dto.member.UpdateMySignalRequestDto;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.service.*;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @Slf4j
@@ -42,23 +48,12 @@ public class ChattingMessageController {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
 
-            ChattingMessage chattingMessage = chattingRoomService.addChattingMessage(accessToken, request.getMessage(), null, null, null, null, "text");
-
-            Member partner = memberService.getPartnerByAccessToken(accessToken);
-            String fcmDetail = firebaseCloudMessageService.chattingMessageFcmJsonObject(
-                    "textChatting",
-                    chattingMessage.getIsRead(),
-                    chattingMessage.getMessage(),
-                    chattingMessage.getNumber(),
-                    chattingMessage.getNumber() / 4,
-                    chattingMessage.getCreatedAt()
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+            ChattingMessage chattingMessage = chattingRoomService.addTextChattingMessage(request.getMessage());
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
@@ -72,44 +67,31 @@ public class ChattingMessageController {
     @PostMapping("/api/v1/chatting-message/question")
     public JSendResponse shareQuestion(@RequestHeader("Authorization") String authorizationHeader,
                                        @RequestBody QuestionChattingRequest request) {
-        try {
-            String accessToken = authorizationHeader.substring("Bearer ".length());
-            //db
-            ChattingMessage chattingMessage = chattingRoomService.addChattingMessage(accessToken, null, request.getIndex(), null, null, null, "question");
-            //fcm
-            Member partner = memberService.getPartnerByAccessToken(accessToken);
 
-            CoupleQuestion coupleQuestion = coupleQuestionService.findByIndex(accessToken, Math.toIntExact(request.getIndex()));
-            String fcmDetail = firebaseCloudMessageService.questionMessageFcmJsonObject(
-                    "questionChatting",
-                    chattingMessage.getIsRead(),
-                    coupleQuestion,
-                    chattingMessage.getNumber(),
-                    chattingMessage.getCreatedAt()
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
-            //response
-            JSONObject coupleQuestionObject = new JSONObject();
+        String accessToken = authorizationHeader.substring("Bearer ".length());
+        //db
+        ChattingMessage chattingMessage = chattingRoomService.addQuestionChattingMessage(request.getIndex());
+        //fcm
+        CoupleQuestion coupleQuestion = coupleQuestionService.findByIndex(Math.toIntExact(request.getIndex()));
+        //response
+        JSONObject coupleQuestionObject = new JSONObject();
 
-            coupleQuestionObject.put("index", coupleQuestion.getNumber());
-            coupleQuestionObject.put("title", coupleQuestion.getQuestion().getTitle());
-            coupleQuestionObject.put("selfAnswer", coupleQuestion.getSelfAnswer());
-            coupleQuestionObject.put("partnerAnswer", coupleQuestion.getPartnerAnswer());
-            coupleQuestionObject.put("createAt", coupleQuestion.getCreatedAt());
+        coupleQuestionObject.put("index", coupleQuestion.getNumber());
+        coupleQuestionObject.put("title", coupleQuestion.getQuestion().getTitle());
+        coupleQuestionObject.put("selfAnswer", coupleQuestion.getSelfAnswer());
+        coupleQuestionObject.put("partnerAnswer", coupleQuestion.getPartnerAnswer());
+        coupleQuestionObject.put("createAt", coupleQuestion.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("coupleQuestion", coupleQuestionObject);
-            jsonObject.put("chatSender", chattingMessage.getMember().getNickname());
-            jsonObject.put("index", chattingMessage.getNumber());
-            jsonObject.put("pageNo", chattingMessage.getNumber() / 4);
-            jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createdAt", chattingMessage.getCreatedAt());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("coupleQuestion", coupleQuestionObject);
+        jsonObject.put("chatSender", chattingMessage.getMember().getNickname());
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("pageNo", chattingMessage.getNumber() / 4);
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
-        } catch (NullPointerException e) {
-            throw e;
-//            return new JSendResponse(Constants.HTTP_FAIL, e.toString());
-        }
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+
     }
 
     @PostMapping("/api/v1/chatting-message/challenge")
@@ -118,19 +100,10 @@ public class ChattingMessageController {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             //db
-            ChattingMessage chattingMessage = chattingRoomService.addChattingMessage(accessToken, null, request.getIndex(), null, null, null, "challenge");
+            ChattingMessage chattingMessage = chattingRoomService.addChallengeChattingMessage(request.getIndex());
             //fcm
-            Member partner = memberService.getPartnerByAccessToken(accessToken);
 
             CoupleChallenge coupleChallengeServiceByIndex = challengeService.findByIndex(accessToken, Math.toIntExact(request.getIndex()));
-            String fcmDetail = firebaseCloudMessageService.shareChallengeFcmJsonObject(
-                    "challengeChatting",
-                    chattingMessage.getIsRead(),
-                    coupleChallengeServiceByIndex,
-                    chattingMessage.getNumber(),
-                    chattingMessage.getCreatedAt()
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
             //response
             JSONObject coupleChallengeObject = new JSONObject();
 
@@ -145,7 +118,7 @@ public class ChattingMessageController {
             jsonObject.put("coupleChallenge", coupleChallengeObject);
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createdAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (NullPointerException e) {
@@ -159,32 +132,22 @@ public class ChattingMessageController {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             //db
-            ChattingMessage chattingMessage = chattingRoomService.addChattingMessage(accessToken, null, null, null, null, request.getImageFile(), "image");
+            ChattingMessage chattingMessage = chattingRoomService.addImageChattingMessage(request.getImageFile());
             //fcm
             Member partner = memberService.getPartnerByAccessToken(accessToken);
-
-            String fcmDetail = firebaseCloudMessageService.imageMessageFcmJsonObject(
-                    "imageChatting",
-                    chattingMessage.getIsRead(),
-                    chattingMessage.getResourceUrl(),
-                    chattingMessage.getNumber(),
-                    chattingMessage.getNumber() / 4,
-                    chattingMessage.getCreatedAt()
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
-
             //response
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             log.error("error :", e);
-            return new JSendResponse(HttpResponse.HTTP_FAIL, "voice 채팅 api 실패 " + e);
+            return new JSendResponse(HttpResponse.HTTP_FAIL, "image 채팅 api 실패 " + e);
         }
     }
+
 
     @PostMapping("/api/v1/chatting-message/voice")
     public JSendResponse sendVoice(@RequestHeader("Authorization") String authorizationHeader,
@@ -192,30 +155,58 @@ public class ChattingMessageController {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             //db
-            ChattingMessage chattingMessage = chattingRoomService.addChattingMessage(accessToken, null, null, null, null, request.getVoiceFile(), "voice");
+            ChattingMessage chattingMessage = chattingRoomService.addVoiceChattingMessage(request.getVoiceFile());
             //fcm
             Member partner = memberService.getPartnerByAccessToken(accessToken);
-
-            String fcmDetail = firebaseCloudMessageService.voiceMessageFcmJsonObject(
-                    "voiceChatting",
-                    chattingMessage.getIsRead(),
-                    chattingMessage.getResourceUrl(),
-                    chattingMessage.getNumber(),
-                    chattingMessage.getNumber() / 4,
-                    chattingMessage.getCreatedAt()
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
-
             //response
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             log.error("error :", e);
             return new JSendResponse(HttpResponse.HTTP_FAIL, "voice 채팅 api 실패 " + e);
+        }
+    }
+    @PostMapping("/api/v1/chatting-message/signal")
+    public JSendResponse sendSignal(@Valid @RequestBody UpdateMySignalRequestDto request) {
+        try {
+            this.memberService.updateMemberSignal(request);
+            ChattingMessage chattingMessage = chattingRoomService.addSignalChattingMessage(request.getMySignal());
+            //response
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+        } catch (RuntimeException e) {
+            log.error("error :", e);
+            return new JSendResponse(HttpResponse.HTTP_FAIL, "signal 채팅 api 실패 " + e);
+        }
+    }
+
+    @PostMapping("/api/v1/chatting-message/reset-partner-password")
+    public JSendResponse sendResetPartnerPassword(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            String accessToken = authorizationHeader.substring("Bearer ".length());
+            //db
+            ChattingMessage chattingMessage = chattingRoomService.addResetPasswordChattingMessage();
+            //fcm
+            Member partner = memberService.getPartnerByAccessToken(accessToken);
+
+            //response
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+        } catch (RuntimeException e) {
+            log.error("error :", e);
+            return new JSendResponse(HttpResponse.HTTP_FAIL, "reset 채팅 api 실패 " + e);
         }
     }
 
@@ -270,6 +261,13 @@ public class ChattingMessageController {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    static class ResetPartnerPasswordChattingRequest {
+        private MultipartFile voiceFile;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     static class ImageChattingRequest {
         private MultipartFile imageFile;
     }
@@ -278,7 +276,7 @@ public class ChattingMessageController {
     @AllArgsConstructor
     @NoArgsConstructor
     static class ChallengeChattingRequest {
-        private Long index;
+        private int index;
     }
 
 }

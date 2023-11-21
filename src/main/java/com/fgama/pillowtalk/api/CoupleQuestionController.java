@@ -2,6 +2,7 @@ package com.fgama.pillowtalk.api;
 
 import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.*;
+import com.fgama.pillowtalk.domain.chattingMessage.ChattingMessage;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.service.*;
@@ -12,6 +13,8 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -55,7 +58,7 @@ public class CoupleQuestionController {
 //                    chattingMessage.getIsRead(),
 //                    chattingMessage.getMessage(),
 //                    chattingMessage.getNumber(),
-//                    chattingMessage.getCreatedAt()
+//                    chattingMessage.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));()
 //            );
 //            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 //            //response
@@ -70,7 +73,7 @@ public class CoupleQuestionController {
 //            jsonObject.put("coupleQuestion", coupleQuestionObject);
 //            jsonObject.put("index", chattingMessage.getNumber());
 //            jsonObject.put("isRead", chattingMessage.getIsRead());
-//            jsonObject.put("createdAt", chattingMessage.getCreatedAt());
+//            jsonObject.put("createdAt", chattingMessage.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));());
 //
 //            return new JSendResponse(Constants.HTTP_SUCCESS, null, jsonObject);
 //        } catch (NullPointerException e) {
@@ -138,7 +141,7 @@ public class CoupleQuestionController {
                 jsonObject.put("isMyAnswer", (question.getPartnerAnswer() != null));
                 jsonObject.put("isPartnerAnswer", (question.getSelfAnswer() != null));
             }
-            jsonObject.put("createAt", question.getCreatedAt());
+            jsonObject.put("createAt", question.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
@@ -192,7 +195,7 @@ public class CoupleQuestionController {
                 jsonObject.put("isMyAnswer", (question.getPartnerAnswer() != null));
                 jsonObject.put("isPartnerAnswer", (question.getSelfAnswer() != null));
             }
-            jsonObject.put("createAt", question.getCreatedAt());
+            jsonObject.put("createAt", question.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
 
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
@@ -209,14 +212,16 @@ public class CoupleQuestionController {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             Member member = memberService.getCurrentMember();
             Couple couple = coupleService.getCouple(member);
-            String fcmDetail = firebaseCloudMessageService.getFcmPressAnswer(
-                    "pressForAnswer",
-                    request.index
-            );
-            Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
+
+            ChattingMessage chattingMessage = chattingRoomService.addPressForAnswerChattingMessage();
+            //response
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (RuntimeException e) {
             return new JSendResponse(HttpResponse.HTTP_FAIL, e.getMessage());
         }
@@ -251,7 +256,7 @@ public class CoupleQuestionController {
                     jsonObject.put("isMyAnswer", (question.getPartnerAnswer() != null));
                     jsonObject.put("isPartnerAnswer", (question.getSelfAnswer() != null));
                 }
-                jsonObject.put("createAt", question.getCreatedAt());
+                jsonObject.put("createAt", question.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
                 jsonArray.add(jsonObject);
 
             }
@@ -299,7 +304,7 @@ public class CoupleQuestionController {
                     jsonObject.put("isMyAnswer", (question.getPartnerAnswer() != null));
                     jsonObject.put("isPartnerAnswer", (question.getSelfAnswer() != null));
                 }
-                jsonObject.put("createAt", question.getCreatedAt());
+                jsonObject.put("createAt", question.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
                 jsonArray.add(jsonObject);
 
             }

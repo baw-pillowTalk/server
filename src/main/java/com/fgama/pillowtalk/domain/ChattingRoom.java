@@ -1,5 +1,6 @@
 package com.fgama.pillowtalk.domain;
 
+import com.fgama.pillowtalk.domain.chattingMessage.ChattingMessage;
 import lombok.*;
 
 import javax.persistence.*;
@@ -24,6 +25,10 @@ public class ChattingRoom {
     @JoinColumn(name = "couple_id")
     private Couple couple;
 
-    @OneToMany(mappedBy = "chattingRoom")
+    @OneToMany(mappedBy = "chattingRoom",cascade = CascadeType.ALL)
     private List<ChattingMessage> messageList;
+
+    public void addMessage(ChattingMessage chattingMessage){
+        this.messageList.add(chattingMessage);
+    }
 }

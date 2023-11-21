@@ -4,11 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
+import com.fgama.pillowtalk.domain.chattingMessage.*;
+import com.fgama.pillowtalk.repository.CoupleQuestionRepository;
+import io.netty.util.Signal;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
+import okhttp3.Challenge;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Component
 @Slf4j
@@ -33,6 +38,8 @@ public class FirebaseCloudMessageService {
     private String API_URL;
     @Value("${fcm.key}")
     private String FCM_KEY;
+
+    private final CoupleQuestionRepository coupleQuestionRepository;
 
     public String sendFcmMessage(String message, String fcmToken) {
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -150,23 +157,6 @@ public class FirebaseCloudMessageService {
         return jsonObject.toJSONString();
     }
 
-    public String questionMessageFcmJsonObject(String type, Boolean isRead, CoupleQuestion coupleQuestion, Long index, LocalDateTime createAt) {
-        JSONObject coupleQuestionObject = new JSONObject();
-        coupleQuestionObject.put("index", coupleQuestion.getNumber());
-        coupleQuestionObject.put("questionTitle", coupleQuestion.getQuestion().getTitle());
-        coupleQuestionObject.put("selfAnswer", coupleQuestion.getSelfAnswer());
-        coupleQuestionObject.put("partnerAnswer", coupleQuestion.getPartnerAnswer());
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", type);
-        jsonObject.put("coupleQuestion", coupleQuestionObject);
-        jsonObject.put("index", index);
-        jsonObject.put("createAt", createAt);
-        jsonObject.put("isRead", isRead);
-
-        return jsonObject.toJSONString();
-    }
-
     public String chattingMessageFcmJsonObject(String type, Boolean isRead, String message, Long index, Long pageIndex, LocalDateTime createdAt) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", type);
@@ -179,6 +169,171 @@ public class FirebaseCloudMessageService {
         return jsonObject.toJSONString();
     }
 
+    public String textMessageFcmJsonObject(TextChattingMessage chattingMessage) {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("message", chattingMessage.getMessage());
+        jsonObject.put("type", "textChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String questionMessageFcmJsonObject(QuestionChattingMessage chattingMessage, CoupleQuestion coupleQuestion) {
+        if (coupleQuestion.getSelfAnswer() == null || coupleQuestion.getPartnerAnswer() == null) {
+            JSONObject questionObject = new JSONObject();
+            questionObject.put("index", coupleQuestion.getNumber());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("coupleQuestion", questionObject);
+            jsonObject.put("type", "answerChatting");
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+            return jsonObject.toJSONString();
+        } else {
+            JSONObject questionObject = new JSONObject();
+            questionObject.put("index", coupleQuestion.getNumber());
+            questionObject.put("questionTitle", coupleQuestion.getQuestion().getTitle());
+            questionObject.put("selfAnswer", coupleQuestion.getSelfAnswer());
+            questionObject.put("partnerAnswer", coupleQuestion.getPartnerAnswer());
+            questionObject.put("createAt", chattingMessage.getCreatedAt());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("coupleQuestion", questionObject);
+            jsonObject.put("type", "questionChatting");
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+            return jsonObject.toJSONString();
+        }
+    }
+
+    public String imageMessageFcmJsonObject(ImageChattingMessage chattingMessage, String url) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("url", url);
+
+        jsonObject.put("type", "imageChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String voiceMessageFcmJsonObject(VoiceChattingMessage chattingMessage, String url) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("type", "voiceChatting");
+        jsonObject.put("url", url);
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String challengeMessageFcmJsonObject(ChallengeChattingMessage chattingMessage, CoupleChallenge coupleChallenge) {
+        JSONObject questionObject = new JSONObject();
+        questionObject.put("index", coupleChallenge.getNumber());
+        questionObject.put("challengeTitle", coupleChallenge.getTitle());
+        questionObject.put("challengeBody", coupleChallenge.getBody());
+        questionObject.put("deadline", coupleChallenge.getTargetDate());
+        questionObject.put("creator", coupleChallenge.getCreator());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("coupleChallenge", questionObject);
+        jsonObject.put("type", "challengeChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+  public String addChallengeMessageFcmJsonObject(ChallengeChattingMessage chattingMessage, CoupleChallenge coupleChallenge) {
+        JSONObject questionObject = new JSONObject();
+        questionObject.put("index", coupleChallenge.getNumber());
+        questionObject.put("challengeTitle", coupleChallenge.getTitle());
+        questionObject.put("challengeBody", coupleChallenge.getBody());
+        questionObject.put("deadline", coupleChallenge.getTargetDate());
+        questionObject.put("creator", coupleChallenge.getCreator());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("coupleChallenge", questionObject);
+        jsonObject.put("type", "addChallengeChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String completeChallengeMessageFcmJsonObject(CompleteChallengeChattingMessage chattingMessage, CoupleChallenge coupleChallenge) {
+        JSONObject completeChallengeObject = new JSONObject();
+        completeChallengeObject.put("index", coupleChallenge.getNumber());
+        completeChallengeObject.put("challengeTitle", coupleChallenge.getTitle());
+        completeChallengeObject.put("challengeBody", coupleChallenge.getBody());
+        completeChallengeObject.put("deadline", coupleChallenge.getTargetDate());
+        completeChallengeObject.put("creator", coupleChallenge.getCreator());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("coupleChallenge", completeChallengeObject);
+        jsonObject.put("type", "completeChallengeChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String signalMessageFcmJsonObject(SignalChattingMessage chattingMessage) {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("signal", chattingMessage.getSignalPercent());
+        jsonObject.put("type", "signalChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String resetPartnerPasswordMessageFcmJsonObject(ResetPasswordChattingMessage chattingMessage) {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("type", "resetPartnerPasswordChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
+    public String pressForAnswerMessageFcmJsonObject(PressForAnswerChattingMessage chattingMessage) {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("type", "pressForAnswerChatting");
+        jsonObject.put("index", chattingMessage.getNumber());
+        jsonObject.put("isRead", chattingMessage.getIsRead());
+        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+
+        return jsonObject.toJSONString();
+    }
+
     public String addChallengeFcmJsonObject(String type, int index) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", type);
@@ -186,29 +341,6 @@ public class FirebaseCloudMessageService {
         return jsonObject.toJSONString();
     }
 
-    public String voiceMessageFcmJsonObject(String type, Boolean isRead, String url, Long index, Long pageIndex, LocalDateTime createdAt) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", type);
-        jsonObject.put("url", url);
-        jsonObject.put("index", index);
-        jsonObject.put("pageIndex", pageIndex);
-        jsonObject.put("createAt", createdAt.toString());
-        jsonObject.put("isRead", isRead);
-
-        return jsonObject.toJSONString();
-    }
-
-    public String imageMessageFcmJsonObject(String type, Boolean isRead, String url, Long index, Long pageIndex, LocalDateTime createdAt) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", type);
-        jsonObject.put("url", url);
-        jsonObject.put("index", index);
-        jsonObject.put("pageIndex", pageIndex);
-        jsonObject.put("createAt", createdAt.toString());
-        jsonObject.put("isRead", isRead);
-
-        return jsonObject.toJSONString();
-    }
 
     public String emojiMessageFcmJsonObject(String type, Boolean isRead, String emoji, Long index, LocalDateTime createAt) {
         JSONObject jsonObject = new JSONObject();

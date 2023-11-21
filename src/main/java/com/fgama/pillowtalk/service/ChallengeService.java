@@ -1,9 +1,13 @@
 package com.fgama.pillowtalk.service;
 
+import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.domain.chattingMessage.ChallengeChattingMessage;
+import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.ChallengeRepository;
+import com.fgama.pillowtalk.repository.ChattingRoomRepository;
 import com.fgama.pillowtalk.repository.CoupleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,9 +28,11 @@ public class ChallengeService {
 
     private final CoupleRepository coupleRepository;
     private final ChallengeRepository challengeRepository;
+    private final ChattingRoomRepository chattingRoomRepository;
 
     private final CoupleService coupleService;
     private final MemberService memberService;
+    private final FirebaseCloudMessageService firebaseCloudMessageService;
 
     public Long join(CoupleChallenge coupleChallenge) {
         challengeRepository.save(coupleChallenge);
@@ -43,8 +49,9 @@ public class ChallengeService {
     }
 
     public CoupleChallenge addChallenge(String accessToken, String title, String body, String targetDate) throws NullPointerException {
-        Member member = this.getMember();
+        Member member = memberService.getCurrentMember();
         Couple couple = this.coupleService.getCouple(member);
+        Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime dateTime = LocalDate.parse(targetDate, formatter).atStartOfDay();
@@ -76,7 +83,7 @@ public class ChallengeService {
         return challengeRepository.save(coupleChallenge1);
     }
 
-    public Long doneChallenge(String accessToken, int index) throws RuntimeException {
+    public Long doneChallenge(int index) throws RuntimeException {
         Member member = this.getMember();
         Couple couple = this.coupleService.getCouple(member);
         CoupleChallenge coupleChallenge1 = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
@@ -130,7 +137,7 @@ public class ChallengeService {
         if (member.getCoupleId() == null) {
             throw new RuntimeException("커플없음");
         }
-        Sort sort = Sort.by(Sort.Direction.DESC, "createAt");
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
         Page<CoupleChallenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(member.getCoupleId(), false, pageRequest);
         if (pageByCoupleId.getTotalPages() == 0) {
@@ -145,7 +152,7 @@ public class ChallengeService {
         if (member.getCoupleId() == null) {
             throw new RuntimeException("커플없음");
         }
-        Sort sort = Sort.by(Sort.Direction.ASC, "createAt");
+        Sort sort = Sort.by(Sort.Direction.ASC, "createdAt");
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
         Page<CoupleChallenge> pageByCoupleId = challengeRepository.findPageByCoupleIdAndDone(member.getCoupleId(), true, pageRequest);
         if (pageByCoupleId.getTotalPages() == 0) {
@@ -166,6 +173,13 @@ public class ChallengeService {
         return couple.getCoupleChallenges().get(index);
     }
 
+    public CoupleChallenge findByNumber(int index) throws NullPointerException {
+        Member member = this.getMember();
+        Couple couple = memberService.getCouple(member);
+        CoupleChallenge challenge = challengeRepository.findByCoupleIdAndNumber(couple.getId(), index);
+        return challenge;
+    }
+
 
     public List<CoupleChallenge> getInProgressChallengeList(String accessToken, int pageNo) {
         Member member = this.getMember();
@@ -180,7 +194,7 @@ public class ChallengeService {
 
     public List<CoupleChallenge> getDoneChallengeList(String accessToken, int pageNo) {
         Member member = this.getMember();
-        Sort sort = Sort.by(Sort.Direction.ASC, "createAt");
+        Sort sort = Sort.by(Sort.Direction.ASC, "createdAt");
         PageRequest pageRequest = PageRequest.of(pageNo, 4, sort);
         List<CoupleChallenge> coupleChallenges = challengeRepository.findByCoupleIdAndDone(member.getCoupleId(), true, pageRequest);
         if (coupleChallenges == null) {
