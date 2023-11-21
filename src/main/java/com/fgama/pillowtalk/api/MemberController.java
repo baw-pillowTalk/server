@@ -60,7 +60,7 @@ public class MemberController {
      * 유저가 채팅을 읽고 있는 상태 or 읽지 않는 상태 변경
      * 변경 후 파트너 에게 공지
      */
-    @PatchMapping("/api/v1/member/chatting-room-status")
+    @PutMapping("/api/v1/member/chatting-room-status")
     public JSendResponse changeChatRoomStatus(
             @Valid @RequestBody ChangeChattingRoomStateRequestDto request
     ) {
