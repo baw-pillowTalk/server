@@ -4,12 +4,10 @@ import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.CoupleChallenge;
 import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.domain.chattingMessage.ChattingMessage;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
-import com.fgama.pillowtalk.service.ChallengeJsonService;
-import com.fgama.pillowtalk.service.ChallengeService;
-import com.fgama.pillowtalk.service.CoupleService;
-import com.fgama.pillowtalk.service.MemberService;
+import com.fgama.pillowtalk.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -31,6 +30,7 @@ public class ChallengeController {
     private final CoupleService coupleService;
     private final ChallengeJsonService challengeJsonService;
     private final FirebaseCloudMessageService firebaseCloudMessageService;
+    private final ChattingRoomService chattingRoomService;
 
     @GetMapping("/api/v1/challenge/count")
     public JSendResponse getCount(@RequestHeader("Authorization") String authorizationHeader) {
@@ -165,20 +165,31 @@ public class ChallengeController {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
             Member member = memberService.getCurrentMember();
-
             Long coupleId = member.getCoupleId();
             Couple couple = coupleService.getCouple(member);
             Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
-            CoupleChallenge coupleChallenge = challengeService.addChallenge(accessToken, request.getTitle(), request.getContent(), request.getDeadline());
-            String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
-                    "addChallenge",
-                    coupleChallenge.getNumber()
+            CoupleChallenge coupleChallengeServiceByIndex = challengeService.addChallenge(accessToken, request.getTitle(), request.getContent(), request.getDeadline());
+            ChattingMessage chattingMessage = chattingRoomService.addChallengeChattingMessage(coupleChallengeServiceByIndex.getNumber());
+            //fcm
 
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+            JSONObject coupleChallengeObject = new JSONObject();
+
+            coupleChallengeObject.put("index", coupleChallengeServiceByIndex.getNumber());
+//            coupleChallengeObject.put("category",challengeServiceByIndex.getCategory());
+            coupleChallengeObject.put("challengeTitle", coupleChallengeServiceByIndex.getTitle());
+            coupleChallengeObject.put("challengeBody", coupleChallengeServiceByIndex.getBody());
+            coupleChallengeObject.put("deadline", coupleChallengeServiceByIndex.getTargetDate());
+            coupleChallengeObject.put("creator", memberService.getCurrentMember().getNickname());
 
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("index", coupleChallenge.getNumber());
+            jsonObject.put("coupleChallenge", coupleChallengeObject);
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+
+
+
 
             return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
@@ -240,20 +251,30 @@ public class ChallengeController {
                                        @RequestBody CompleteChallengeRequest request) {
         try {
             String accessToken = authorizationHeader.substring("Bearer ".length());
-            challengeService.doneChallenge(accessToken, request.getIndex());
+            challengeService.doneChallenge(request.getIndex());
             Member member = memberService.getCurrentMember();
-
             Couple couple = coupleService.getCouple(member);
-            Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
+            ChattingMessage chattingMessage = chattingRoomService.addCompleteChallengeChattingMessage(request.getIndex());
 
-            String fcmDetail = firebaseCloudMessageService.addChallengeFcmJsonObject(
-                    "completeChallenge",
-                    request.getIndex()
+            CoupleChallenge coupleChallenge = challengeService.findByIndex(accessToken, request.getIndex());
+            //response
+            JSONObject coupleChallengeObject = new JSONObject();
 
-            );
-            firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
+            coupleChallengeObject.put("index", coupleChallenge.getNumber());
+//            coupleChallengeObject.put("category",challengeServiceByIndex.getCategory());
+            coupleChallengeObject.put("challengeTitle", coupleChallenge.getTitle());
+            coupleChallengeObject.put("challengeBody", coupleChallenge.getBody());
+            coupleChallengeObject.put("deadline", coupleChallenge.getTargetDate());
+            coupleChallengeObject.put("creator", memberService.getCurrentMember().getNickname());
 
-            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("coupleChallenge", coupleChallengeObject);
+            jsonObject.put("index", chattingMessage.getNumber());
+            jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
+            jsonObject.put("isRead", chattingMessage.getIsRead());
+            jsonObject.put("createAt",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+
+            return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
         } catch (Exception e) {
             return new JSendResponse(HttpResponse.HTTP_FAIL, e.toString());
         }

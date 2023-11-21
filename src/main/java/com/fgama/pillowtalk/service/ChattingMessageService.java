@@ -1,7 +1,7 @@
 package com.fgama.pillowtalk.service;
 
 import com.fgama.pillowtalk.components.AmazonS3ResourceStorage;
-import com.fgama.pillowtalk.domain.ChattingMessage;
+import com.fgama.pillowtalk.domain.chattingMessage.ChattingMessage;
 import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;

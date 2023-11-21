@@ -46,7 +46,7 @@ public class CoupleQuestionService {
         PageRequest pageRequest = PageRequest.of(0, 4, sort);
         Page<CoupleQuestion> byCoupleId = coupleQuestionRepository.findPageByCoupleId(couple.getId(), pageRequest);
         if (byCoupleId.getTotalPages() == 0) {
-            return byCoupleId.getTotalPages();
+            return 0;
         } else {
             return byCoupleId.getTotalPages() - 1;
         }
@@ -56,7 +56,7 @@ public class CoupleQuestionService {
         //다읽어오면 안됨
         Member member = this.memberService.getCurrentMember();
         List<CoupleQuestion> coupleQuestions = coupleQuestionRepository.findByCoupleId(member.getCoupleId());
-        if (coupleQuestions == null) {
+        if (coupleQuestions.size() <= 0) {
             throw new NullPointerException("커플 질문이 비었음");
         }
         return coupleQuestions.get(coupleQuestions.size() - 1);
@@ -96,7 +96,7 @@ public class CoupleQuestionService {
         return coupleQuestions;
     }
 
-    public CoupleQuestion findByIndex(String accessToken, int index) throws NullPointerException {
+    public CoupleQuestion findByIndex(int index) throws NullPointerException {
         Member member = this.memberService.getCurrentMember();
         Couple couple = coupleRepository.findById(member.getCoupleId()).orElseThrow(NullPointerException::new);
         List<CoupleQuestion> questionList = coupleQuestionRepository.findByCoupleId(couple.getId());
@@ -253,12 +253,6 @@ public class CoupleQuestionService {
                         "todayQuestion",
                         "질문에 답변을 남기고 서로를 알아가보세요!",
                         all.get(0).getNumber());
-
-                String partnerFcmToken = couple.getPartner().getFcmToken();
-                firebaseCloudMessageService.sendFcmMessage(fcmDetail, partnerFcmToken);
-
-                String selfFcmToken = couple.getSelf().getFcmToken();
-                firebaseCloudMessageService.sendFcmMessage(fcmDetail, selfFcmToken);
 
 
             } else {

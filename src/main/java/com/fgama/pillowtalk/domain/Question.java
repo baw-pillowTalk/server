@@ -34,7 +34,7 @@ public class Question {
     public Question(Long id, int number, String title, String header, String body, List<QuestionChar> questionChars) {
         this.id = id;
         this.number = number;
-        this.title = title;
+        this.title = header + body;
         this.header = header;
         this.body = body;
         this.questionChars = questionChars;

@@ -4,6 +4,7 @@ import com.fgama.pillowtalk.components.FileDetail;
 import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.constant.SnsType;
 import com.fgama.pillowtalk.domain.*;
+import com.fgama.pillowtalk.domain.chattingMessage.*;
 import com.fgama.pillowtalk.dto.member.*;
 import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
 import com.fgama.pillowtalk.exception.member.*;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 
+import static com.fgama.pillowtalk.constant.MemberStatus.COUPLE;
 import static com.fgama.pillowtalk.constant.MemberStatus.SOLO;
 
 @Service
@@ -96,31 +98,30 @@ public class MemberService {
         Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
         ChattingMessage message = chattingMessageRepository.findFirstByMemberIdOrderByCreatedAtDesc(partner.getId());
         String result;
-        switch (message.getType()) {
-            case "text":
-                result = message.getMessage();
-                break;
-            case "image":
-                result = "이미지 채팅입니다.";
-                break;
-            case "video":
-                result = "동영상 채팅입니다.";
-                break;
-            case "voice":
-                result = "보이스 채팅입니다.";
-                break;
-            case "question":
-                result = "질문 채팅입니다.";
-                break;
-            case "challenge":
-                result = "챌린지 채팅입니다.";
-                break;
-            case "emoji":
-                result = "이모티콘 채팅입니다.";
-                break;
-            default:
-                throw new NullPointerException("연인 마지막 메시지가 없습니다.");
 
+
+        if (message instanceof TextChattingMessage) {
+            result = "텍스트 채팅입니다.";
+        } else if (message instanceof ImageChattingMessage) {
+            result = "이미지 채팅입니다.";
+        } else if (message instanceof VoiceChattingMessage) {
+            result = "보이스 채팅입니다.";
+        } else if (message instanceof QuestionChattingMessage) {
+            result = "질문 채팅입니다.";
+        } else if (message instanceof ChallengeChattingMessage) {
+            result = "챌린지 채팅입니다.";
+        } else if (message instanceof CompleteChallengeChattingMessage) {
+            result = "챌린지 채팅입니다.";
+        } else if (message instanceof ResetPasswordChattingMessage) {
+            result = "리셋요청 채팅입니다.";
+        } else if (message instanceof SignalChattingMessage) {
+            result = "시그널 채팅입니다.";
+        }else if (message instanceof CompleteChallengeChattingMessage) {
+            result = "챌린지 채팅입니다.";
+        }else if (message instanceof PressForAnswerChattingMessage) {
+            result = "질문 채팅입니다.";
+        } else {
+            throw new NullPointerException("연인 마지막 메시지가 없습니다.");
         }
 
         return result;
@@ -294,6 +295,8 @@ public class MemberService {
         return this.getMemberById(SecurityUtil.getMemberId());
     }
 
+
+
     public MemberConfig getCurrentMemberConfig() {
         return this.getCurrentMember().getMemberConfig();
     }
@@ -407,7 +410,7 @@ public class MemberService {
     }
 
 
-    private Couple getCouple(Member member) {
+    public Couple getCouple(Member member) {
         return coupleRepository.findCoupleById(member.getCoupleId())
                 .orElseThrow(() -> new CoupleNotFoundException("일치하는 커플 데이터가 존재하지 않습니다."));
     }

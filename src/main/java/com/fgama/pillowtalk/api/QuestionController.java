@@ -21,6 +21,13 @@ public class QuestionController {
     private final MemberService memberService;
     private final ChattingRoomService chattingRoomService;
 
+    @PostMapping("/api/question")
+    public String AddQuestion() {
+        Question question = Question.builder().number(0).header("난 이게 가장 좋더라 !").body("내가 가장 좋아하는 스킨십은 ?").build();
+        questionService.join(question);
+        return "기존 질문 추가 성공";
+    }
+
     /**
      * 서비스에서 지정한 질문 저장(등록)
      **/
@@ -28,7 +35,8 @@ public class QuestionController {
     public String AddQuestions() {
         try {
             //파일 객체 생성
-            File file = new File("/Users/choejong-geun/Spring/pillowtalk/src/main/resources/static/questionList.txt");
+//            File file = new File("/Users/choejong-geun/Spring/pillowtalk/src/main/resources/static/questionList.txt");
+            File file = new File("/home/ec2-user/questionList.txt");
             //입력 스트림 생성
             FileReader filereader = new FileReader(file);
             //입력 버퍼 생성

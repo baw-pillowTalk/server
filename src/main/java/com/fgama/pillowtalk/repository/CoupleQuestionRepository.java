@@ -1,7 +1,5 @@
 package com.fgama.pillowtalk.repository;
 
-import com.fgama.pillowtalk.domain.ChattingMessage;
-import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.CoupleQuestion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

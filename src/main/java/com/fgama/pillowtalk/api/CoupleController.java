@@ -28,6 +28,8 @@ public class CoupleController {
     public ResponseEntity<Long> createCouple(
             @RequestBody @Valid MatchCoupleRequestDto request
     ) {
-        return new ResponseEntity<>(this.coupleService.createCouple(request), HttpStatus.CREATED);
+        Long couple = this.coupleService.createCouple(request);
+        coupleQuestionService.addCoupleQuestion(couple);
+        return new ResponseEntity<>(couple, HttpStatus.CREATED);
     }
 }
