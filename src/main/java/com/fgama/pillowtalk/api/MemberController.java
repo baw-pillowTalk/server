@@ -95,7 +95,7 @@ public class MemberController {
     /**
      * - fcm 변경 API
      **/
-    @PatchMapping("/api/v1/member/fcm-token")
+    @PutMapping("/api/v1/member/fcm-token")
     public JSendResponse updateFcmToken(
             @RequestBody @Valid UpdateFcmTokenRequestDto request
     ) {

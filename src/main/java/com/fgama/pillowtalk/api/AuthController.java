@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fgama.pillowtalk.auth.SigninWithAppleJWT;
+import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.Member;
+import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.dto.MemberDto;
 import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
@@ -18,6 +20,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,9 +53,16 @@ public class AuthController {
      * - 서비스 access,refresh token 발급
      **/
     @PostMapping("/api/v1/login")
-    public ResponseEntity<OauthLoginResponse> login(
+    public JSendResponse login(
             @RequestBody @Valid OauthLoginRequestDto request) {
-        return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
+        OauthLoginResponse oauthLoginResponse = this.authService.login(request);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("tokenType", oauthLoginResponse.getTokenType());
+        jsonObject.put("accessToken", oauthLoginResponse.getAccessToken());
+        jsonObject.put("refreshToken", oauthLoginResponse.getRefreshToken());
+        jsonObject.put("expiredTime", oauthLoginResponse.getExpiredTime());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+//        return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
     }
 
     /***
