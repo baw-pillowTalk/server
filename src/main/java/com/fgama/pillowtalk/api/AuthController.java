@@ -81,10 +81,17 @@ public class AuthController {
      * - jwtAuthenticationFilter 예외 API
      */
     @PostMapping("/api/v1/reissue")
-    public ResponseEntity<OauthLoginResponse> reissue(
+    public JSendResponse reissue(
             HttpServletRequest httpServletRequest
     ) {
-        return ResponseEntity.ok(this.authService.reissue(httpServletRequest));
+        OauthLoginResponse reissue = this.authService.reissue(httpServletRequest);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("tokenType", reissue.getTokenType());
+        jsonObject.put("accessToken", reissue.getAccessToken());
+        jsonObject.put("refreshToken", reissue.getRefreshToken());
+        jsonObject.put("expiredTime", reissue.getExpiredTime());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
+//        return ResponseEntity.ok(this.authService.reissue(httpServletRequest));
     }
 
     /**

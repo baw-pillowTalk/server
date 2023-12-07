@@ -214,7 +214,7 @@ public class CoupleQuestionController {
             Couple couple = coupleService.getCouple(member);
 
 
-            ChattingMessage chattingMessage = chattingRoomService.addPressForAnswerChattingMessage();
+            ChattingMessage chattingMessage = chattingRoomService.addPressForAnswerChattingMessage(request.getIndex());
             //response
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("index", chattingMessage.getNumber());

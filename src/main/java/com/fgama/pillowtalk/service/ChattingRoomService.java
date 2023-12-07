@@ -126,8 +126,9 @@ public class ChattingRoomService {
                 .build();
 
         saveChattingMessage(couple, chattingMessage);
+
         CoupleChallenge challenge = challengeRepository.findByCoupleIdAndNumber(couple.getId(), challengeIndex);
-        String fcmDetail = firebaseCloudMessageService.challengeMessageFcmJsonObject(chattingMessage, challenge);
+        String fcmDetail = firebaseCloudMessageService.addChallengeMessageFcmJsonObject(chattingMessage, challenge);
         firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
         return chattingMessage;
@@ -244,7 +245,7 @@ public class ChattingRoomService {
         return chattingMessage;
     }
 
-    public ChattingMessage addPressForAnswerChattingMessage() throws NullPointerException {
+    public ChattingMessage addPressForAnswerChattingMessage(long questionIndex) throws NullPointerException {
         Member self = memberService.getCurrentMember();
         Couple couple = this.coupleService.getCouple(self);
         Member partner = (couple.getSelf() == self) ? couple.getPartner() : couple.getSelf();
@@ -253,12 +254,13 @@ public class ChattingRoomService {
                 .self(self)
                 .isRead(partner.getChattingRoomStatus())
                 .chattingRoom(couple.getChattingRoom())
+                .coupleQuestionIndex(questionIndex)
                 .number((long) couple.getChattingRoom().getMessageList().size())
                 .build();
 
         saveChattingMessage(couple, chattingMessage);
-
-        String fcmDetail = firebaseCloudMessageService.pressForAnswerMessageFcmJsonObject(chattingMessage);
+        CoupleQuestion coupleQuestion = coupleQuestionRepository.findByNumberAndCoupleId(Math.toIntExact(questionIndex), couple.getId());
+        String fcmDetail = firebaseCloudMessageService.pressForAnswerMessageFcmJsonObject(chattingMessage,coupleQuestion);
         firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
 
         return chattingMessage;
