@@ -64,6 +64,7 @@ public class MemberController {
     public JSendResponse changeChatRoomStatus(
             @Valid @RequestBody ChangeChattingRoomStateRequestDto request
     ) {
+        memberService.changeChatRoomStatus(request);
         JSONObject jsonObject = new JSONObject();
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }

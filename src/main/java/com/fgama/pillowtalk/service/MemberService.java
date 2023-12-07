@@ -66,26 +66,24 @@ public class MemberService {
     public void changeChatRoomStatus(ChangeChattingRoomStateRequestDto request) throws NullPointerException {
         Member member = this.getCurrentMember();
         Couple couple = this.getCouple(member);
+        Member memberPartner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
         member.setChattingRoomStatus(request);
+        memberRepository.save(member);
 
-        Member memberPartner = null;
-
-        if (request.isInChat()) {
-            Member partner = (couple.getSelf() == member) ? couple.getPartner() : couple.getSelf();
+        if (request.getIsInChat()) {
             List<ChattingMessage> chattingMessages = couple.getChattingRoom().getMessageList();
 
             for (ChattingMessage message : chattingMessages) {
-                if (message.getMember() == partner) {
+                if (message.getMember() == memberPartner) {
                     message.setIsRead(true);
                 }
             }
-            memberPartner = partner;
         }
         String fcmDetail = this.firebaseCloudMessageService.getFcmChattingStatus(
                 "chatRoomStatusChange",
-                request.isInChat()
+                request.getIsInChat()
         );
-        firebaseCloudMessageService.sendFcmMessage(fcmDetail, Objects.requireNonNull(memberPartner).getFcmToken());
+        firebaseCloudMessageService.sendFcmMessage(fcmDetail,memberPartner.getFcmToken());
     }
 
     public Member findMemberByRefreshToken(String refreshToken) throws NullPointerException {
