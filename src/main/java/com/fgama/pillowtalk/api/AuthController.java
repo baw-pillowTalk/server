@@ -1,5 +1,6 @@
 package com.fgama.pillowtalk.api;
 
+import com.dreamsecurity.mobileOK.MobileOKException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,9 +9,12 @@ import com.fgama.pillowtalk.constant.HttpResponse;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.JSendResponse;
 import com.fgama.pillowtalk.dto.MemberDto;
+import com.fgama.pillowtalk.dto.adult.AdultAuthenticationTokenDto.AdultAuthenticationRequestDto;
+import com.fgama.pillowtalk.dto.adult.AdultAuthenticationVerificationRequestDto;
 import com.fgama.pillowtalk.dto.auth.MemberAuthentication;
 import com.fgama.pillowtalk.dto.auth.OauthLoginRequestDto;
 import com.fgama.pillowtalk.dto.auth.OauthLoginResponse;
+import com.fgama.pillowtalk.service.AdultService;
 import com.fgama.pillowtalk.service.AuthService;
 import com.fgama.pillowtalk.service.JwtService;
 import com.fgama.pillowtalk.service.MemberService;
@@ -21,8 +25,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,7 @@ import static com.fgama.pillowtalk.constant.SnsType.APPLE;
  * 2. 로그 아웃(logout)
  * 3. 엑시스,리프레시 재발급(reissue)
  * 4. 회원 탈퇴(withdraw)
+ * 5. 성인 인증 관련 로직
  */
 
 @Slf4j
@@ -44,6 +47,7 @@ import static com.fgama.pillowtalk.constant.SnsType.APPLE;
 @RestController
 public class AuthController {
     private final AuthService authService;
+    private final AdultService adultService;
     private final MemberService memberService;
     private final JwtService jwtService;
 
@@ -62,7 +66,6 @@ public class AuthController {
         jsonObject.put("refreshToken", oauthLoginResponse.getRefreshToken());
         jsonObject.put("expiredTime", oauthLoginResponse.getExpiredTime());
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
-//        return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
     }
 
     /***
@@ -70,8 +73,10 @@ public class AuthController {
      * - member's refresh token 삭제
      */
     @PostMapping("/api/v1/logout")
-    public ResponseEntity<Long> logout() {
-        return new ResponseEntity<>(this.authService.logout(), HttpStatus.OK);
+    public JSendResponse logout() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", this.authService.logout());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
 
@@ -81,19 +86,25 @@ public class AuthController {
      * - jwtAuthenticationFilter 예외 API
      */
     @PostMapping("/api/v1/reissue")
-    public ResponseEntity<OauthLoginResponse> reissue(
+    public JSendResponse reissue(
             HttpServletRequest httpServletRequest
     ) {
-        return ResponseEntity.ok(this.authService.reissue(httpServletRequest));
+        OauthLoginResponse reissueToken = this.authService.reissue(httpServletRequest);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("tokenType", reissueToken.getTokenType());
+        jsonObject.put("accessToken", reissueToken.getAccessToken());
+        jsonObject.put("refreshToken", reissueToken.getRefreshToken());
+        jsonObject.put("expiredTime", reissueToken.getExpiredTime());
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 
     /**
      * - 회원 탈퇴 API
      **/
     @DeleteMapping("/api/v1/withdraw")
-    public ResponseEntity<Void> withDraw() {
+    public JSendResponse withDraw() {
         this.authService.withDraw();
-        return ResponseEntity.ok().build();
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
     /***
@@ -137,6 +148,26 @@ public class AuthController {
             throw e;
         }
     }
+
+
+    /* 본인 인증 요청 */
+    @PostMapping("/api/v1/adult/authentication")
+    public JSendResponse requestAdultAuthentication(
+            @Valid @RequestBody AdultAuthenticationRequestDto request
+    ) throws MobileOKException {
+        com.dreamsecurity.json.JSONObject result = this.adultService.adultAuthenticationRequest(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
+    }
+
+    /* 본인 인증 검증 요청 */
+    @PostMapping("/api/v1/adult/authentication/verification")
+    public JSendResponse requestAdultAuthenticationVerification(
+            @Valid @RequestBody AdultAuthenticationVerificationRequestDto request
+    ) throws MobileOKException {
+        this.adultService.adultAuthenticationVerificationRequest(request);
+        return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
+    }
+
 
     private OauthLoginResponse getOauthLoginResponseDto(Member savedMember) {
         SecurityContextHolder.getContext().setAuthentication(new MemberAuthentication(savedMember)); // 인증 객체 생성

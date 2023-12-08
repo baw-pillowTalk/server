@@ -60,7 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 /* 2. access token 에서 unique claim 가져와서 Member 조회 */
                 Member member = this.memberRepository.findById(Long.parseLong(this.jwtService.extractSubjectFromAccessToken(accessToken)))
                         .orElseThrow(() -> new UsernameNotFoundException("일치하는 회원이 존재하지 않습니다."));
-
                 /* 3. SecurityContext 에 AbstractAuthenticationToken 을 상속한 MemberAuthentication 저장 */
                 saveAuthentication(member);
             }
