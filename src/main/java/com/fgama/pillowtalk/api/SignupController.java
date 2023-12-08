@@ -36,4 +36,5 @@ public class SignupController {
         jsonObject.put("memberId", memberId);
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
+    
 }

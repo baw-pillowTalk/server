@@ -1,10 +1,12 @@
 package com.fgama.pillowtalk.service;
 
+import com.fgama.pillowtalk.constant.MemberStatus;
 import com.fgama.pillowtalk.domain.ChattingRoom;
 import com.fgama.pillowtalk.domain.Couple;
 import com.fgama.pillowtalk.domain.Member;
 import com.fgama.pillowtalk.dto.couple.MatchCoupleRequestDto;
 import com.fgama.pillowtalk.exception.couple.CoupleAlreadyExistException;
+import com.fgama.pillowtalk.exception.couple.CoupleNeedExtraSignupException;
 import com.fgama.pillowtalk.exception.couple.CoupleNotFoundException;
 import com.fgama.pillowtalk.fcm.FirebaseCloudMessageService;
 import com.fgama.pillowtalk.repository.ChattingRoomRepository;
@@ -41,9 +43,8 @@ public class CoupleService {
         Member self = this.memberService.getCurrentMember();
         Member partner = this.memberService.findMemberByInviteCode(request.getInviteCode());
 
-        if (this.isCouple(self, partner)) {
-            throw new CoupleAlreadyExistException("커플이 이미 존재합니다.");
-        }
+        /* 커플 상태 검사 */
+        this.checkCoupleStatus(self, partner);
         /* couple 생성 및 저장*/
         Couple couple = this.coupleRepository.save(Couple.builder()
                 .self(self)
@@ -66,6 +67,16 @@ public class CoupleService {
         String fcmDetail = firebaseCloudMessageService.getFcmJsonObject("필로우에 오신걸 환영해요\uD83D\uDD13", "createCouple", "두 분의 커플 매칭이 완료 되었어요!");
         this.firebaseCloudMessageService.sendFcmMessage(fcmDetail, partner.getFcmToken());
         return couple.getId();
+    }
+
+    private void checkCoupleStatus(Member self, Member partner) {
+        if (this.isCouple(self, partner)) {
+            throw new CoupleAlreadyExistException("커플이 이미 존재합니다.");
+        }
+
+        if (self.getMemberStatus() == MemberStatus.NEWBIE || partner.getMemberStatus() == MemberStatus.NEWBIE) {
+            throw new CoupleNeedExtraSignupException("커플 중 회원가입이 미완료된 회원이 존재합니다.");
+        }
     }
 
     private Boolean isCouple(Member self, Member partner) {
