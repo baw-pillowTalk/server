@@ -108,6 +108,6 @@ public class Member extends BaseEntity {
     }
 
     public void setChattingRoomStatus(ChangeChattingRoomStateRequestDto request) {
-        this.chattingRoomStatus = request.isInChat();
+        this.chattingRoomStatus = request.getIsInChat();
     }
 }

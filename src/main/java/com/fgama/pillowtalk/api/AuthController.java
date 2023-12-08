@@ -89,6 +89,7 @@ public class AuthController {
     public JSendResponse reissue(
             HttpServletRequest httpServletRequest
     ) {
+
         OauthLoginResponse reissueToken = this.authService.reissue(httpServletRequest);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("tokenType", reissueToken.getTokenType());

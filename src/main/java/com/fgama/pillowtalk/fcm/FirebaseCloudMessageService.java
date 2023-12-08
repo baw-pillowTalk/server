@@ -176,7 +176,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "textChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -192,7 +192,7 @@ public class FirebaseCloudMessageService {
             jsonObject.put("type", "answerChatting");
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
             return jsonObject.toJSONString();
@@ -202,14 +202,14 @@ public class FirebaseCloudMessageService {
             questionObject.put("questionTitle", coupleQuestion.getQuestion().getTitle());
             questionObject.put("selfAnswer", coupleQuestion.getSelfAnswer());
             questionObject.put("partnerAnswer", coupleQuestion.getPartnerAnswer());
-            questionObject.put("createAt", chattingMessage.getCreatedAt());
+            questionObject.put("createAt", coupleQuestion.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("coupleQuestion", questionObject);
             jsonObject.put("type", "questionChatting");
             jsonObject.put("index", chattingMessage.getNumber());
             jsonObject.put("isRead", chattingMessage.getIsRead());
-            jsonObject.put("createAt", chattingMessage.getCreatedAt());
+            jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
             jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
             return jsonObject.toJSONString();
@@ -223,7 +223,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "imageChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -235,7 +235,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("url", url);
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -246,7 +246,7 @@ public class FirebaseCloudMessageService {
         questionObject.put("index", coupleChallenge.getNumber());
         questionObject.put("challengeTitle", coupleChallenge.getTitle());
         questionObject.put("challengeBody", coupleChallenge.getBody());
-        questionObject.put("deadline", coupleChallenge.getTargetDate());
+        questionObject.put("deadline", coupleChallenge.getTargetDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         questionObject.put("creator", coupleChallenge.getCreator());
 
         JSONObject jsonObject = new JSONObject();
@@ -254,12 +254,13 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "challengeChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
     }
-  public String addChallengeMessageFcmJsonObject(ChallengeChattingMessage chattingMessage, CoupleChallenge coupleChallenge) {
+
+    public String addChallengeMessageFcmJsonObject(ChallengeChattingMessage chattingMessage, CoupleChallenge coupleChallenge) {
         JSONObject questionObject = new JSONObject();
         questionObject.put("index", coupleChallenge.getNumber());
         questionObject.put("challengeTitle", coupleChallenge.getTitle());
@@ -272,7 +273,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "addChallengeChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -283,7 +284,7 @@ public class FirebaseCloudMessageService {
         completeChallengeObject.put("index", coupleChallenge.getNumber());
         completeChallengeObject.put("challengeTitle", coupleChallenge.getTitle());
         completeChallengeObject.put("challengeBody", coupleChallenge.getBody());
-        completeChallengeObject.put("deadline", coupleChallenge.getTargetDate());
+        completeChallengeObject.put("deadline", coupleChallenge.getTargetDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         completeChallengeObject.put("creator", coupleChallenge.getCreator());
 
         JSONObject jsonObject = new JSONObject();
@@ -291,7 +292,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "completeChallengeChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -304,7 +305,7 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "signalChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
@@ -316,19 +317,20 @@ public class FirebaseCloudMessageService {
         jsonObject.put("type", "resetPartnerPasswordChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();
     }
 
-    public String pressForAnswerMessageFcmJsonObject(PressForAnswerChattingMessage chattingMessage) {
+    public String pressForAnswerMessageFcmJsonObject(PressForAnswerChattingMessage chattingMessage, CoupleQuestion coupleQuestion) {
         JSONObject jsonObject = new JSONObject();
 
+        jsonObject.put("coupleQuestion", coupleQuestion.getNumber());
         jsonObject.put("type", "pressForAnswerChatting");
         jsonObject.put("index", chattingMessage.getNumber());
         jsonObject.put("isRead", chattingMessage.getIsRead());
-        jsonObject.put("createAt",chattingMessage.getCreatedAt());
+        jsonObject.put("createAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         jsonObject.put("pageIndex", chattingMessage.getNumber() / 4);
 
         return jsonObject.toJSONString();

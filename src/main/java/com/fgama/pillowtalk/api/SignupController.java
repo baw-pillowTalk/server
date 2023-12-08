@@ -31,8 +31,9 @@ public class SignupController {
     public JSendResponse signup(
             @Valid @RequestBody CompleteMemberSignupRequestDto request
     ) {
+        Long memberId = this.signupService.signup(request);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", this.signupService.signup(request));
+        jsonObject.put("memberId", memberId);
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
     

@@ -29,10 +29,10 @@ public class CoupleController {
     public JSendResponse createCouple(
             @RequestBody @Valid MatchCoupleRequestDto request
     ) {
-        Long id = this.coupleService.createCouple(request);
-        coupleQuestionService.addCoupleQuestion(id);
+        Long couple = this.coupleService.createCouple(request);
+        coupleQuestionService.addCoupleQuestion(couple);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", id);
+        jsonObject.put("coupleId", couple);
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, jsonObject);
     }
 }
