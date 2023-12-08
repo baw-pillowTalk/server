@@ -6,7 +6,6 @@ spring:
 fcm:
   key: ${FCM_KEY}
   url: ${FCM_URL}
-
 cloud:
   aws:
     s3:
