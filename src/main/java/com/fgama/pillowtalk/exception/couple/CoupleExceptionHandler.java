@@ -37,4 +37,13 @@ public class CoupleExceptionHandler {
         log.warn("CoupleNotFoundException Occurs");
         return ResponseEntity.ok(JSendResponse.of(exception));
     }
+
+    /* 커플 중 회원가입 미 완료 */
+    @ExceptionHandler(CoupleNeedExtraSignupException.class)
+    public ResponseEntity<JSendResponse> coupleNeedExtraSignupExceptionHandler(
+            CoupleNeedExtraSignupException exception
+    ) {
+        log.warn("CoupleNeedExtraSignupException Occurs");
+        return ResponseEntity.ok(JSendResponse.of(exception));
+    }
 }
