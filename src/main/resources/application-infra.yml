@@ -29,15 +29,17 @@ logging:
 service:
   image-url: ${SERVICE_IMAGE_URL}
   default-image-url: ${SERVICE_DEFAULT_IMAGE_PATH}
+  domain: ${SERVICE_DOMAIN}
 
 adult:
   token:
     url: ${TOKEN_URL}
   auth:
     url: ${AUTH_URL}
-  reauth:
+  re auth:
     url: ${REAUTH_URL}
   verification:
     url: ${VERIFICATION_URL}
   keyfile:
+    location: ${KEYFILE_LOCATION}
     password: ${KEYFILE_PASSWORD}

@@ -35,19 +35,25 @@ public class AdultService {
     private final static String RET_TRANSFER_TYPE = "MOKResult"; // 요청 대상의 결과 전송 타입
 
     @Value("${adult.token.url}")
-    private String tokenUrl; // 본인확인 토큰 요청 url
+    private String tokenUrl; // 1. 본인확인 토큰 요청 url
 
     @Value("${adult.auth.url}")
-    private String authUrl; // 본인확인 인증 요청 url
+    private String authUrl; // 2. 본인확인 인증 요청 url
 
     @Value("${adult.reauth.url}")
-    private String reAuthUrl; // 본인확인 재인증 요청 url
+    private String reAuthUrl; // 3. 본인확인 재인증 요청 url
 
     @Value("${adult.keyfile.password}")
-    private String keyFilePassword; // 키파일 비밀번호
+    private String keyFilePassword; // 4. 키파일 비밀번호
+
+    @Value("${adult.keyfile.location}")
+    private String keyFileLocation; // 5. 키파일 위치
 
     @Value("${adult.verification.url}")
-    private String verificationUrl; // 본인확인 인증 검증 url
+    private String verificationUrl; // 6. 본인확인 인증 검증 url
+
+    @Value("${service.domain}")
+    private String serviceDomain = "http://3.38.37.33:8080";
 
     /* 1-0. 본인확인 인증 요청 API */
     @Transactional
@@ -56,12 +62,12 @@ public class AdultService {
         try {
             // 본인확인 키파일을 통한 비밀키
             mobileOK = new mobileOKKeyManager();
-            mobileOK.keyInit(" /Users/DongKuen/Desktop/ForCoding/필로우톡/mok_keyInfo.dat", keyFilePassword);
-            mobileOK.setSiteUrl("www.mobile-ok.com"); // pillow talk 도메인
+            mobileOK.keyInit(keyFileLocation, keyFilePassword);
+            mobileOK.setSiteUrl(serviceDomain); // pillow talk 도메인
         } catch (MobileOKException e) {
             throw new MobileOKException(e.getErrorCode() + "|" + e.getMessage());
         }
-        // 1. 본인확인 토큰 요청을 위한 데이터 설정
+        // 1. 본인확인 토큰 요청을 위한 문자열 데이터 설정
         String mokGetTokenResponseJsonString = this.mobileOkApiGetToken(mobileOK);
 
         /**
@@ -76,10 +82,17 @@ public class AdultService {
 
         assert mokGetTokenResponse != null;
         // JSONObject 객체로 변환
+        /**
+         * - encryptMokToken,
+         * - publikKey,
+         * - resultCode,
+         * - resultMsg
+         **/
         com.dreamsecurity.json.JSONObject mokGetTokenResponseJson = new com.dreamsecurity.json.JSONObject(mokGetTokenResponse);
 
         String token = mokGetTokenResponseJson.getString("encryptMOKToken"); // 토큰
         String publicKey = mokGetTokenResponseJson.getString("publicKey"); // 암호화 용도의 공개키
+        String siteUrl = serviceDomain;
 
         // ---------------------------------------------------------------------------------------- //
 
@@ -105,18 +118,28 @@ public class AdultService {
 
         // 4. 본인확인 인증 요청
         String mokAuthResponseJsonString = this.sendRequestAuth(authUrl, mokAuthRequestJsonString);
-        return new com.dreamsecurity.json.JSONObject(Objects.requireNonNull(mokAuthResponseJsonString));
+        com.dreamsecurity.json.JSONObject MOKAuthResponseJson = new com.dreamsecurity.json.JSONObject(Objects.requireNonNull(mokAuthResponseJsonString));
+
+
+        if (!"2000".equals(mokAuthResponseJsonString)) {
+            throw new RuntimeException("인증 중 오류 발생");
+
+        }
+        return null;
     }
 
 
     /* 1-1. 본인확인 토큰 받기 요청 데이터 생성 */
     private String mobileOkApiGetToken(mobileOKKeyManager mobileOK) throws MobileOKException {
+        // 이용기간 거래 ID 생성
         String sampleClientTxId = PREFIX_ID + UUID.randomUUID().toString().replaceAll("-", "");
 
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String reqClientInfo = sampleClientTxId + "|" + formatter.format(cal.getTime());
-        String encryptReqClientInfo = mobileOK.RSAEncrypt(reqClientInfo); // 거래코드 비밀키로 암호화
+
+        // 이용기간 거래 ID 비밀키로 암호화
+        String encryptReqClientInfo = mobileOK.RSAEncrypt(reqClientInfo);
 
         JSONObject mokGetTokenRequestJson = new JSONObject();
         mokGetTokenRequestJson.put("serviceId", mobileOK.getServiceId());
@@ -179,6 +202,25 @@ public class AdultService {
     }
 
     /* 3.1 본인확인-API 인증요청 데이터 설정 */
+
+    // String mokAuthRequestJsonString = this.mokAuthRequestToJsonString(
+    //                mobileOK,
+    //                publicKey,
+    //                token,
+    //                mobileOK.getSiteUrl(),
+    //                request.getProviderId(),
+    //                request.getReqAuthType(),
+    //                USAGE_CODE,
+    //                SERVICE_TYPE,
+    //                request.getUserName(),
+    //                request.getUserPhone(),
+    //                RET_TRANSFER_TYPE,
+    //                "",
+    //                request.getUserBirthday(),
+    //                request.getUserGender(),
+    //                String.valueOf(request.getUserNation()),
+    //                null,
+    //                null);
     private String mokAuthRequestToJsonString(
             mobileOKKeyManager mobileOK
             , String publicKey
@@ -196,7 +238,8 @@ public class AdultService {
             , String userGender
             , String userNation
             , String sendMsg
-            , String replyNumber) throws MobileOKException {
+            , String replyNumber
+    ) throws MobileOKException {
 
         JSONObject MOKAuthInfoJson = new JSONObject();
         MOKAuthInfoJson.put("providerId", providerId);
@@ -206,45 +249,10 @@ public class AdultService {
         MOKAuthInfoJson.put("userName", userName);
         MOKAuthInfoJson.put("userPhone", userPhoneNum);
         MOKAuthInfoJson.put("retTransferType", retTransferType);
-        if ("telcoAuth-ARSAuth".equals(serviceType)) {
-            MOKAuthInfoJson.put("arsCode", arsCode);
-            MOKAuthInfoJson.put("userBirthday", userBirthday);
-            MOKAuthInfoJson.put("userGender", userGender);
-            MOKAuthInfoJson.put("userNation", userNation);
-            if (!"".equals(sendMsg)) {
-                MOKAuthInfoJson.put("sendMsg", sendMsg);
-            }
-            if (!"".equals(replyNumber)) {
-                MOKAuthInfoJson.put("replyNumber", replyNumber);
-            }
-        } else if (serviceType.indexOf("telcoAuth") != -1
-                && "SMS".equals(reqAuthType)
-                || "LMS".equals(reqAuthType)) {
-            MOKAuthInfoJson.put("userBirthday", userBirthday);
-            MOKAuthInfoJson.put("userGender", userGender);
-            MOKAuthInfoJson.put("userNation", userNation);
-            if (!"".equals(sendMsg)) {
-                MOKAuthInfoJson.put("sendMsg", sendMsg);
-            }
-            if (!"".equals(replyNumber)) {
-                MOKAuthInfoJson.put("replyNumber", replyNumber);
-            }
-        } else if ("ARSAuth".equals(serviceType)) {
-            MOKAuthInfoJson.put("arsCode", arsCode);
-            if (!"".equals(sendMsg)) {
-                MOKAuthInfoJson.put("sendMsg", sendMsg);
-            }
-            if (!"".equals(replyNumber)) {
-                MOKAuthInfoJson.put("replyNumber", replyNumber);
-            }
-        } else if ("SMSAuth".equals(serviceType)) {
-            if (!"".equals(sendMsg)) {
-                MOKAuthInfoJson.put("sendMsg", sendMsg);
-            }
-            if (!"".equals(replyNumber)) {
-                MOKAuthInfoJson.put("replyNumber", replyNumber);
-            }
-        }
+        MOKAuthInfoJson.put("userBirthDay", userBirthday);
+        MOKAuthInfoJson.put("userGender", userGender);
+        MOKAuthInfoJson.put("userNation", userNation);
+
 
         // 유저 정보 암호화
         String encMOKAuthInfo = mobileOK.RSAServerEncrypt(publicKey, MOKAuthInfoJson.toString());
@@ -257,6 +265,8 @@ public class AdultService {
         return MOKAuthRequestJson.toString();
     }
 
+
+    // 본인확인 인증 요청
     private String sendRequestAuth(String dest, String jsonData) throws MobileOKException {
         HttpURLConnection connection = null;
         DataOutputStream dataOutputStream = null;
@@ -308,6 +318,7 @@ public class AdultService {
         return null;
     }
 
+
     private String setErrorMsg(String errorMsg) {
         JSONObject errorJson = new JSONObject();
         errorJson.put("resultMsg", errorMsg);
@@ -354,7 +365,7 @@ public class AdultService {
         if (encMokToken == null) {
             setErrorMsg("본인확인 요청 MOKToken 이 없습니다.");
         }
-        
+
         // 3. 인증 검증 요청
 
     }
