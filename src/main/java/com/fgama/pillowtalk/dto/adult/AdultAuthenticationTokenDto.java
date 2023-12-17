@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 /**
  * - 본인 확인 API 거래 토큰 요청
@@ -30,13 +29,13 @@ public class AdultAuthenticationTokenDto {
         private String userBirthday; // 사용자 생년월일
         @NotBlank
         private String userGender; // 사용자 성별
-        @NotNull
-        private int userNation; // 내국인 : 0 & 외국인 : 1
+        @NotBlank
+        private String userNation; // 내국인 : 0 & 외국인 : 1
 
         @Builder
         public AdultAuthenticationRequestDto(String providerId, String reqAuthType,
                                              String userName, String userPhone,
-                                             String userBirthday, String userGender, int userNation
+                                             String userBirthday, String userGender, String userNation
         ) {
             this.providerId = providerId;
             this.reqAuthType = reqAuthType;

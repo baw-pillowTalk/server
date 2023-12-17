@@ -156,7 +156,7 @@ public class AuthController {
     public JSendResponse requestAdultAuthentication(
             @Valid @RequestBody AdultAuthenticationRequestDto request
     ) throws MobileOKException {
-        com.dreamsecurity.json.JSONObject result = this.adultService.adultAuthenticationRequest(request);
+        this.adultService.adultAuthenticationRequest(request);
         return new JSendResponse(HttpResponse.HTTP_SUCCESS, null, null);
     }
 
