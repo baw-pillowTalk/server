@@ -29,7 +29,6 @@ logging:
 service:
   image-url: ${SERVICE_IMAGE_URL}
   default-image-url: ${SERVICE_DEFAULT_IMAGE_PATH}
-  domain: ${SERVICE_DOMAIN}
 
 adult:
   token:

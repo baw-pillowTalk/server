@@ -32,27 +32,19 @@ public class AdultService {
     private final static String USAGE_CODE = "01006"; // 성인인증 코드
     private final static String SERVICE_TYPE = "telcoAuth"; // 서비스 타입
     private final static String RET_TRANSFER_TYPE = "MOKResult"; // 요청 대상의 결과 전송 타입
-
+    private static final String SERVICE_DOMAIN = "http://3.38.37.33:8080";
     @Value("${adult.token.url}")
     private String tokenUrl; // 1. 본인확인 토큰 요청 url
-
     @Value("${adult.auth.url}")
     private String authUrl; // 2. 본인확인 인증 요청 url
-
     @Value("${adult.reauth.url}")
     private String reAuthUrl; // 3. 본인확인 재인증 요청 url
-
     @Value("${adult.keyfile.password}")
     private String keyFilePassword; // 4. 키파일 비밀번호
-
     @Value("${adult.keyfile.location}")
     private String keyFileLocation; // 5. 키파일 위치
-
     @Value("${adult.verification.url}")
     private String verificationUrl; // 6. 본인확인 인증 검증 url
-
-    @Value("${service.domain}")
-    private String serviceDomain = "http://3.38.37.33:8080";
 
     /* 1-0. 본인확인 인증 요청 API */
     @Transactional
@@ -62,7 +54,7 @@ public class AdultService {
             // 본인확인 키파일을 통한 비밀키
             mobileOK = new mobileOKKeyManager();
             mobileOK.keyInit(keyFileLocation, keyFilePassword);
-            mobileOK.setSiteUrl(serviceDomain); // pillow talk 도메인
+            mobileOK.setSiteUrl(SERVICE_DOMAIN); // pillow talk 도메인
         } catch (MobileOKException e) {
             throw new MobileOKException(e.getErrorCode() + "|" + e.getMessage());
         }
@@ -89,7 +81,7 @@ public class AdultService {
 
         String token = mokGetTokenResponseJson.getString("encryptMOKToken"); // 토큰
         String publicKey = mokGetTokenResponseJson.getString("publicKey"); // 암호화 용도의 공개키
-        String siteUrl = serviceDomain;
+        String siteUrl = SERVICE_DOMAIN;
 
         // ---------------------------------------------------------------------------------------- //
 
@@ -321,7 +313,7 @@ public class AdultService {
             // 본인확인 키파일을 통한 비밀키
             mobileOK = new mobileOKKeyManager();
             mobileOK.keyInit(keyFileLocation, keyFilePassword);
-            mobileOK.setSiteUrl(serviceDomain); // pillow talk 도메인
+            mobileOK.setSiteUrl(SERVICE_DOMAIN); // pillow talk 도메인
         } catch (MobileOKException e) {
             throw new MobileOKException(e.getErrorCode() + "|" + e.getMessage());
         }
@@ -339,7 +331,7 @@ public class AdultService {
 
         String token = mokGetTokenResponseJson.getString("encryptMOKToken"); // 토큰
         String publicKey = mokGetTokenResponseJson.getString("publicKey"); // 암호화 용도의 공개키
-        String siteUrl = serviceDomain;
+        String siteUrl = SERVICE_DOMAIN;
 
         // 3. 본인확인 검증 요청
         String result = this.mobileOkApiResult(mobileOK, token, publicKey, siteUrl, request);
